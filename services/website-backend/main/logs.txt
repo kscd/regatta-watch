@@ -1,0 +1,2 @@
+2025/01/18 13:26:26 load all data: query positions: failed to connect to `host=localhost user=regatta database=regatta`: failed SASL auth (FATAL: password authentication failed for user "regatta" (SQLSTATE 28P01))
+2025/01/18 13:26:26 cannot initialise state for boat "Bluebird": load all data: query positions: failed to connect to `host=localhost user=regatta database=regatta`: failed SASL auth (FATAL: password authentication failed for user "regatta" (SQLSTATE 28P01))
