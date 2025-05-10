@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import {BoatService, Status} from '../services/boatService';
 
 export const useUptime = () => {
 
@@ -6,13 +7,12 @@ export const useUptime = () => {
 
     useEffect(() => {
       const interval = setInterval(async () => {
-        let response = await fetch('http://localhost:8091/ping');
-        let result = response.status;
-
-        if (result == 200) {
-            setCounter(counter + 1)            
-        }
-
+          BoatService.ping()
+            .then((response: Status) => {
+                if (response == "200") {
+                    setCounter(counter + 1)
+                }
+            })
         }, 1000);
   
       return () => clearInterval(interval);

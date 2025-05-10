@@ -26,11 +26,11 @@ func main() {
 		log.Fatal("error loading config: ", err)
 	}
 
-	mode := "hackertalk"
+	mode := "random"
 
 	storageClient, _ := newDatabaseClient(c.DBConfig, PositionAtTime{
-		Longitude:   53.5675975,
-		Latitude:    10.004,
+		Latitude:    53.5675975,
+		Longitude:   10.004,
 		MeasureTime: time.Time{},
 		SendTime:    time.Time{},
 		ReceiveTime: time.Time{},

@@ -28,14 +28,14 @@ function App() {
     return (
     <>
       <div style={{float:"left", marginRight:20}}>
-        <Map positionN={position.positionN} positionW={position.positionW} heading={position.heading} pearlChain={pearlChain} /> 
+        <Map positionN={position.latitude} positionW={position.longitude} heading={position.heading} pearlChain={pearlChain} />
       </div>
         <div style={{float: "right", backgroundColor: "#707070"}}>
             <h2 className="boat-name">PSC Bluebird (Conger)</h2>
-            <Infoboard positionN={position.positionN} positionW={position.positionW} heading={position.heading}
-                       velocity={position.velocityInKnots} distance={position.distanceInNM} round={position.round}
+            <Infoboard positionN={position.latitude} positionW={position.longitude} heading={position.heading}
+                       velocity={position.velocity} distance={position.distance} round={position.round}
                        section={position.section} crew0={position.crew0} crew1={position.crew1}
-                       nextCrew0={position.nextCrew0} nextCrew1={position.nextCrew1}/>
+                       nextCrew0={position.next_crew0} nextCrew1={position.next_crew1}/>
             <div className="horizontal-line"></div>
             <CountdownTimer targetDate={regattaStartDate}/>
             <div className="horizontal-line"></div>
