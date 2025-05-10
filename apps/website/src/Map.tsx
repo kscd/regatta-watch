@@ -3,14 +3,14 @@ import alsterImg from './assets/alster.png'
 
 type Position = {latitude: number, longitude: number, heading: number};
 
-type MapProps = { positionN: number; positionW: number; heading: number; pearlChain: Position[]};
+type MapProps = {positionN: number; positionW: number; heading: number; pearlChain: Position[]};
 
 export const Map: React.FC<MapProps> = ({ positionN, positionW, heading, pearlChain}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  let buoy1 = {latitude: 53.565538, longitude: 10.014123-0.005}
-  let buoy2 = {latitude: 53.558766+0.0035, longitude: 9.998720+0.0055}
-  let buoy3 = {latitude: 53.576497-0.001, longitude: 10.004418+0.001}
+  const buoy1 = {latitude: 53.565538, longitude: 10.014123-0.005}
+  const buoy2 = {latitude: 53.558766+0.0035, longitude: 9.998720+0.0055}
+  const buoy3 = {latitude: 53.576497-0.001, longitude: 10.004418+0.001}
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -53,7 +53,7 @@ export const Map: React.FC<MapProps> = ({ positionN, positionW, heading, pearlCh
 
 
     const drawPosition = (positionN: number, positionW: number, heading: number) => {
-      let headingInRadians = heading / 180 * Math.PI
+      const headingInRadians = heading / 180 * Math.PI
       
       context.beginPath();
       context.arc(calcPixelFromLongitude(positionW), calcPixelFromLatitude(positionN), 10, 0.5 * Math.PI + headingInRadians, 0.5 * Math.PI + headingInRadians + 2 * Math.PI / 2);
@@ -68,7 +68,7 @@ export const Map: React.FC<MapProps> = ({ positionN, positionW, heading, pearlCh
 
     const drawPearlChain = (pearlChain: Position[]) => {
       for (let i = 0; i < pearlChain.length; i++) {
-        let headingInRadians = pearlChain[i].heading / 180 * Math.PI
+        const headingInRadians = pearlChain[i].heading / 180 * Math.PI
 
         context.beginPath();
         context.arc(calcPixelFromLongitude(pearlChain[i].longitude), calcPixelFromLatitude(pearlChain[i].latitude), 5, 0.5 * Math.PI + headingInRadians, 0.5 * Math.PI + headingInRadians + 2 * Math.PI / 2);
@@ -106,28 +106,28 @@ export const Map: React.FC<MapProps> = ({ positionN, positionW, heading, pearlCh
   return <canvas ref={canvasRef} />;
 };
 
-let calcPixelFromLatitude = (latitude :number) => {
+const calcPixelFromLatitude = (latitude :number) => {
     const pixelA = 1024.8;
     const latitudeA = 53.557778;
 
     const pixelB = 41;
     const latitudeB = 53.577417;
 
-    let latitudeDelta = latitudeB - latitudeA;
-    let pixelDelta = pixelB - pixelA;
+    const latitudeDelta = latitudeB - latitudeA;
+    const pixelDelta = pixelB - pixelA;
 
     return (latitude - latitudeA)/latitudeDelta*pixelDelta + pixelA
 }
 
-let calcPixelFromLongitude = (longitude :number) => {
+const calcPixelFromLongitude = (longitude :number) => {
     const pixelA = 73;
     const longitudeA = 9.997917;
 
     const pixelB = 435.2;
     const longitudeB = 10.010083;
 
-    let longitudeDelta = longitudeB - longitudeA;
-    let pixelDelta = pixelB - pixelA;
+    const longitudeDelta = longitudeB - longitudeA;
+    const pixelDelta = pixelB - pixelA;
 
     return (longitude - longitudeA)/longitudeDelta*pixelDelta + pixelA
 }
@@ -153,9 +153,5 @@ Google maps picture: 650x1055, 1.623
 1496x1828, 1.222
 
 New Pictures:
-
-
-
-
 */
 

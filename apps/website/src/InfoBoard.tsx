@@ -37,29 +37,29 @@ export const Infoboard: React.FC<InfoboardProps> = ({ positionN, positionW, head
     </div>
 );
 
-let calcLatitudeFromNumber = (a: number) => {
+const calcLatitudeFromNumber = (a: number) => {
       a = a > 90 ? 90 : a
       a = a < -90? -90: a
 
-      let char = a >= 0? "N" : "S"
-      let degree = Math.abs(Math.trunc(a))
-      let minute = (Math.abs(a) - degree)*60
+      const char = a >= 0? "N" : "S"
+      const degree = Math.abs(Math.trunc(a))
+      const minute = (Math.abs(a) - degree)*60
       return `${degree}° ${minuteFormat.format(minute)}' ${char}`
     };
 
-      let calcLongitudeFromNumber = (a: number) => {
+      const calcLongitudeFromNumber = (a: number) => {
       a = (a + 180) % 360 - 180
 
-      let char = a >= 0 || a == 180 ? "E" : "W"
-      let degree = Math.abs(Math.trunc(a))
-      let minute = (Math.abs(a) - degree)*60
+      const char = a >= 0 || a == 180 ? "E" : "W"
+      const degree = Math.abs(Math.trunc(a))
+      const minute = (Math.abs(a) - degree)*60
       return `${degree}° ${minuteFormat.format(minute)}' ${char}`
     };
 
-      let calcHeadingFromNumber = (a: number) => {
+      const calcHeadingFromNumber = (a: number) => {
       a = ((a % 360) + 360) % 360 // positive-only modulo
 
-      let degree = Math.trunc(a)
+      const degree = Math.trunc(a)
       return `${degree}°`
     };
 
