@@ -9,29 +9,25 @@ import (
 )
 
 type fakeStorage struct {
-	positionsByBoat  map[string][]PositionAtTime
+	positionsByBoat  map[string][]Position
 	oldHeadingByBoat map[string]float64
 }
 
 func newFakeStorage() *fakeStorage {
 	return &fakeStorage{
-		positionsByBoat: map[string][]PositionAtTime{
+		positionsByBoat: map[string][]Position{
 			"Bluebird": {
 				{
-					Latitude:    53.5675975,
-					Longitude:   10.004,
-					MeasureTime: time.Now(),
-					SendTime:    time.Now(),
-					ReceiveTime: time.Now(),
+					Latitude:  53.5675975,
+					Longitude: 10.004,
+					Time:      time.Now(),
 				},
 			},
 			"Vivace": {
 				{
-					Latitude:    53.5675975,
-					Longitude:   10.008,
-					MeasureTime: time.Now(),
-					SendTime:    time.Now(),
-					ReceiveTime: time.Now(),
+					Latitude:  53.5675975,
+					Longitude: 10.008,
+					Time:      time.Now(),
 				},
 			},
 		},
@@ -42,41 +38,63 @@ func newFakeStorage() *fakeStorage {
 	}
 }
 
-func (fs *fakeStorage) GetPositions(_ context.Context, boat string, _ time.Time, limit int) ([]PositionAtTime, error) {
-	fmt.Println("Get fake position")
+type LastTwoPositions struct {
+	CurrentPosition Position
+	LastPosition    Position
+}
 
+type Position struct {
+	Longitude float64   `json:"longitude"`
+	Latitude  float64   `json:"latitude"`
+	Time      time.Time `json:"measure_time"`
+}
+
+func (fs *fakeStorage) GetLastTwoPositions(_ context.Context, boat string, _ time.Time) (*LastTwoPositions, error) {
 	if boat != "Bluebird" && boat != "Vivace" {
 		return nil, fmt.Errorf("boat not found: %s", boat)
 	}
 
-	if limit > 2 {
-		// return pearl chain
-
-		numPositions := len(fs.positionsByBoat[boat])
-
-		pearlLength := limit
-		if numPositions <= limit {
-			pearlLength = numPositions
-		}
-
-		return fs.positionsByBoat[boat][numPositions-pearlLength:], nil
+	if len(fs.positionsByBoat[boat]) == 0 {
+		return nil, fmt.Errorf("no positions found for boat: %s", boat)
 	}
 
-	// create and return new position
 	lastPosition := fs.positionsByBoat[boat][len(fs.positionsByBoat[boat])-1]
-
-	newHeading := fs.oldHeadingByBoat[boat] + 30*rand.Float64() - 10
+	newHeading := fs.oldHeadingByBoat[boat] + 30*rand.Float64() - 10 // new heading is random but has a bias to the right
 	fakeVelocity := 0.0005 * rand.Float64()
 	newLatitude := lastPosition.Latitude + fakeVelocity*math.Cos(newHeading*math.Pi/180)
 	newLongitude := lastPosition.Longitude + fakeVelocity*math.Sin(newHeading*math.Pi/180)
 
-	newPosition := &PositionAtTime{
-		Latitude:    newLatitude,
-		Longitude:   newLongitude,
-		MeasureTime: time.Now(),
+	currentPosition := Position{
+		Latitude:  newLatitude,
+		Longitude: newLongitude,
+		Time:      time.Now(),
 	}
 
-	return []PositionAtTime{*newPosition}, nil
+	fs.positionsByBoat[boat] = append(fs.positionsByBoat[boat], currentPosition)
+	fs.oldHeadingByBoat[boat] = newHeading
+
+	return &LastTwoPositions{
+		CurrentPosition: currentPosition,
+		LastPosition:    lastPosition,
+	}, nil
+}
+
+func (fs *fakeStorage) GetPositions(_ context.Context, boat string, startTime, endTime time.Time) ([]Position, error) {
+	if boat != "Bluebird" && boat != "Vivace" {
+		return nil, fmt.Errorf("boat not found: %s", boat)
+	}
+
+	var positions []Position
+	for _, pos := range fs.positionsByBoat[boat] {
+		if pos.Time.Before(startTime) {
+			continue
+		} else if pos.Time.After(endTime) {
+			break
+		}
+		positions = append(positions, pos)
+	}
+
+	return positions, nil
 }
 
 func (fs *fakeStorage) InsertPositions(_ context.Context, position *DataServerReadMessageResponse) error {
