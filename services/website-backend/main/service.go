@@ -61,7 +61,7 @@ type boatState struct {
 	lastSectionTimestamp   time.Time
 	lastRoundTimestamp     time.Time
 	lastDataPointTimestamp time.Time
-	lastPosition           *PositionAtTime
+	lastPosition           *Position
 	pearlChainPositions    []position
 	pearlChainTimes        []time.Time
 }
@@ -77,7 +77,8 @@ type regattaService struct {
 }
 
 type storageInterface interface {
-	GetPositions(ctx context.Context, boat string, upperBound time.Time, limit int) ([]PositionAtTime, error)
+	GetLastTwoPositions(_ context.Context, boat string, _ time.Time) (*LastTwoPositions, error)
+	GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error)
 	InsertPositions(ctx context.Context, position *DataServerReadMessageResponse) error
 	GetMode() string
 }
@@ -133,8 +134,7 @@ func (s *regattaService) FetchPosition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	positions, err := s.storageClient.GetPositions(context.Background(), m.Boat, time.Now(), 2)
-	fmt.Println(positions)
+	positions, err := s.storageClient.GetLastTwoPositions(context.Background(), m.Boat, time.Now())
 	if err != nil {
 		s.LogError(fmt.Errorf("get positions: %v", err))
 		return
@@ -144,34 +144,23 @@ func (s *regattaService) FetchPosition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(positions) == 0 {
-		return
-	}
-
-	var heading float64
-	var additionalDistance float64
-
-	if len(positions) == 2 {
-		heading = calculateHeading(
-			positions[1].Latitude,
-			positions[1].Longitude,
-			positions[0].Latitude,
-			positions[0].Longitude,
-		)
-		additionalDistance = calculateDistanceInNM(
-			positions[1].Latitude,
-			positions[1].Longitude,
-			positions[0].Latitude,
-			positions[0].Longitude,
-		)
-	}
+	heading := calculateHeading(
+		positions.LastPosition.Latitude,
+		positions.LastPosition.Longitude,
+		positions.CurrentPosition.Latitude,
+		positions.CurrentPosition.Longitude,
+	)
+	additionalDistance := calculateDistanceInNM(
+		positions.LastPosition.Latitude,
+		positions.LastPosition.Longitude,
+		positions.CurrentPosition.Latitude,
+		positions.CurrentPosition.Longitude,
+	)
 
 	s.boatStates[m.Boat].distance += additionalDistance
 
 	var timeDeltaInSeconds float64
-	if len(positions) > 1 {
-		timeDeltaInSeconds = positions[0].MeasureTime.Sub(positions[1].MeasureTime).Seconds()
-	}
+	timeDeltaInSeconds = positions.CurrentPosition.Time.Sub(positions.LastPosition.Time).Seconds()
 	velocity := additionalDistance * 3600 / timeDeltaInSeconds // knots
 	if timeDeltaInSeconds == 0 {
 		velocity = 0
@@ -190,13 +179,13 @@ func (s *regattaService) FetchPosition(w http.ResponseWriter, r *http.Request) {
 
 	lastPosition := s.boatStates[m.Boat].lastPosition
 	if lastPosition == nil {
-		lastPosition = &PositionAtTime{}
+		lastPosition = &Position{}
 	}
 
 	response := FetchPositionResponse{
-		MeasureTime: lastPosition.MeasureTime,
-		Latitude:    positions[0].Latitude,  // lastPosition.Latitude
-		Longitude:   positions[0].Longitude, // lastPosition.Longitude
+		MeasureTime: lastPosition.Time,
+		Latitude:    positions.CurrentPosition.Latitude,  // lastPosition.Latitude
+		Longitude:   positions.CurrentPosition.Longitude, // lastPosition.Longitude
 		Heading:     s.boatStates[m.Boat].heading,
 		Distance:    s.boatStates[m.Boat].distance,
 		Velocity:    s.boatStates[m.Boat].velocity,
@@ -453,15 +442,14 @@ func (s *regattaService) ReceiveData(boat string) {
 	if s.storageClient.GetMode() == "hackertalk" {
 		s.hackertalkTime = s.hackertalkTime.Add(120 * time.Second)
 	}
-
-	s.updateState(boat, positions.PositionsAtTime, true)
+	s.updateState(boat, PostitionAtTimeToPosition(positions.PositionsAtTime), true)
 }
 
-func (s *regattaService) updateState(boat string, positions []PositionAtTime, printBuoyUpdate bool) {
+func (s *regattaService) updateState(boat string, positions []Position, printBuoyUpdate bool) {
 	if len(positions) > 0 {
 
 		// Set last time stamp for future DB querying.
-		s.boatStates[boat].lastDataPointTimestamp = positions[len(positions)-1].MeasureTime
+		s.boatStates[boat].lastDataPointTimestamp = positions[len(positions)-1].Time
 
 		// Loop through all the received data and update state
 		for i := range positions {
@@ -477,7 +465,7 @@ func (s *regattaService) updateState(boat string, positions []PositionAtTime, pr
 			additionalDistance := calculateDistanceInNM(s.boatStates[boat].lastPosition.Latitude, s.boatStates[boat].lastPosition.Longitude, currentPosition.Latitude, currentPosition.Longitude)
 			s.boatStates[boat].distance += additionalDistance
 
-			timeDeltaInSeconds := currentPosition.MeasureTime.Sub(s.boatStates[boat].lastPosition.MeasureTime).Seconds()
+			timeDeltaInSeconds := currentPosition.Time.Sub(s.boatStates[boat].lastPosition.Time).Seconds()
 			velocity := additionalDistance * 3600 / timeDeltaInSeconds // knots
 			if timeDeltaInSeconds == 0 {
 				velocity = 0
@@ -497,13 +485,13 @@ func (s *regattaService) updateState(boat string, positions []PositionAtTime, pr
 			} else {
 				lastPCTime = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 			}
-			if currentPosition.MeasureTime.Sub(lastPCTime).Seconds() > s.pearlChainStep {
+			if currentPosition.Time.Sub(lastPCTime).Seconds() > s.pearlChainStep {
 				s.boatStates[boat].pearlChainPositions = append(s.boatStates[boat].pearlChainPositions, position{
 					Latitude:  currentPosition.Latitude,
 					Longitude: currentPosition.Longitude,
 					Heading:   s.boatStates[boat].heading,
 				})
-				s.boatStates[boat].pearlChainTimes = append(s.boatStates[boat].pearlChainTimes, currentPosition.MeasureTime)
+				s.boatStates[boat].pearlChainTimes = append(s.boatStates[boat].pearlChainTimes, currentPosition.Time)
 				if lenPC+1 > s.pearlChainLength {
 					s.boatStates[boat].pearlChainPositions = s.boatStates[boat].pearlChainPositions[1:]
 					s.boatStates[boat].pearlChainTimes = s.boatStates[boat].pearlChainTimes[1:]
@@ -517,8 +505,8 @@ func (s *regattaService) updateState(boat string, positions []PositionAtTime, pr
 	}
 }
 
-func (s *regattaService) calculateIfBuoysPassed(boat string, positionOld, positionNew *PositionAtTime, printUpdate bool) {
-	timeDeltaInSeconds := positionNew.MeasureTime.Sub(positionOld.MeasureTime).Seconds()
+func (s *regattaService) calculateIfBuoysPassed(boat string, positionOld, positionNew *Position, printUpdate bool) {
+	timeDeltaInSeconds := positionNew.Time.Sub(positionOld.Time).Seconds()
 	if timeDeltaInSeconds > 0 {
 		passed, err := calculateIfBuoysPassed(positionOld, positionNew)
 		if err != nil {
@@ -532,14 +520,14 @@ func (s *regattaService) calculateIfBuoysPassed(boat string, positionOld, positi
 			}
 		}
 		if passed[s.boatStates[boat].currentSection] {
-			sectionTime := positionNew.MeasureTime.Sub(s.boatStates[boat].lastSectionTimestamp).Seconds()
+			sectionTime := positionNew.Time.Sub(s.boatStates[boat].lastSectionTimestamp).Seconds()
 			s.boatStates[boat].sectionTimes = append(s.boatStates[boat].sectionTimes, sectionTime)
-			s.boatStates[boat].lastSectionTimestamp = positionNew.MeasureTime
+			s.boatStates[boat].lastSectionTimestamp = positionNew.Time
 
 			if s.boatStates[boat].currentSection == len(buoys)-1 {
-				roundTime := positionNew.MeasureTime.Sub(s.boatStates[boat].lastRoundTimestamp).Seconds()
+				roundTime := positionNew.Time.Sub(s.boatStates[boat].lastRoundTimestamp).Seconds()
 				s.boatStates[boat].roundTimes = append(s.boatStates[boat].roundTimes, roundTime)
-				s.boatStates[boat].lastRoundTimestamp = positionNew.MeasureTime
+				s.boatStates[boat].lastRoundTimestamp = positionNew.Time
 
 				s.boatStates[boat].currentRound++
 				s.boatStates[boat].currentSection = 0
@@ -551,7 +539,7 @@ func (s *regattaService) calculateIfBuoysPassed(boat string, positionOld, positi
 }
 
 func (s *regattaService) ReinitialiseState(boat string) error {
-	positions, err := s.storageClient.GetPositions(context.Background(), boat, time.Now(), 1_000_000_000)
+	positions, err := s.storageClient.GetPositions(context.Background(), boat, time.Now().AddDate(0, 1, 0), time.Now())
 	if err != nil {
 		err = fmt.Errorf("load all data: %w", err)
 		s.LogError(err)
@@ -570,8 +558,8 @@ func (s *regattaService) ReinitialiseState(boat string) error {
 			lastRoundTimestamp = time.Now()
 		}
 	} else {
-		lastSectionTimestamp = positions[0].MeasureTime
-		lastRoundTimestamp = positions[0].MeasureTime
+		lastSectionTimestamp = positions[0].Time
+		lastRoundTimestamp = positions[0].Time
 	}
 
 	s.boatStates[boat] = &boatState{
@@ -595,4 +583,16 @@ func (s *regattaService) ReinitialiseState(boat string) error {
 
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
+
+func PostitionAtTimeToPosition(p []PositionAtTime) []Position {
+	var positions []Position
+	for i := range p {
+		positions = append(positions, Position{
+			Latitude:  p[i].Latitude,
+			Longitude: p[i].Longitude,
+			Time:      p[i].MeasureTime,
+		})
+	}
+	return positions
 }

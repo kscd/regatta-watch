@@ -44,67 +44,78 @@ func newDatabaseClient(config databaseConfig, initialPosition PositionAtTime, mo
 	}, nil
 }
 
+func (c *databaseClient) GetLastTwoPositions(_ context.Context, boat string, _ time.Time) (*LastTwoPositions, error) {
+	return nil, nil
+}
+
 // GetPositions positions are sorted descending
-func (c *databaseClient) GetPositions(ctx context.Context, boat string, upperBound time.Time, limit int) ([]PositionAtTime, error) {
-	upperBoundFake := upperBound
-	table := "positions_website_backend"
-	if c.mode == "test" {
-		table = "positions_data_server_test" // should have been positions_website_backend_test
-		upperBoundFake = time.Date(2024, 01, 01, 00, 00, upperBound.Second(), 0, time.UTC)
-	}
+func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error) {
+	return nil, nil
+	/*
+			upperBoundFake := upperBound
+			table := "positions_website_backend"
+			if c.mode == "test" {
+				table = "positions_data_server_test" // should have been positions_website_backend_test
+				upperBoundFake = time.Date(2024, 01, 01, 00, 00, upperBound.Second(), 0, time.UTC)
+			}
 
-	query := fmt.Sprintf(`
-       SELECT longitude, latitude, measure_time, send_time, receive_time
-	   FROM %s
-	   WHERE boat = $1
-	   AND measure_time <= $2
-	   ORDER BY measure_time ASC
-	   LIMIT $3;
-       `, table)
+			query := fmt.Sprintf(`
+		       SELECT longitude, latitude, measure_time, send_time, receive_time
+			   FROM %s
+			   WHERE boat = $1
+			   AND measure_time <= $2
+			   ORDER BY measure_time ASC
+			   LIMIT $3;
+		       `, table)
 
-	ctx, cancel := context.WithTimeout(ctx, time.Second)
-	defer cancel()
+			ctx, cancel := context.WithTimeout(ctx, time.Second)
+			defer cancel()
 
-	rows, err := c.Database.QueryContext(
-		ctx,
-		query,
-		boat,
-		upperBoundFake,
-		limit)
+			rows, err := c.Database.QueryContext(
+				ctx,
+				query,
+				boat,
+				upperBoundFake,
+				limit)
 
-	if err != nil {
-		return nil, fmt.Errorf("query positions: %w", err)
-	}
+			if err != nil {
+				return nil, fmt.Errorf("query positions: %w", err)
+			}
 
-	var positions []PositionAtTime
-	for rows.Next() {
-		var position PositionAtTime
-		err = rows.Scan(
-			&position.Longitude,
-			&position.Latitude,
-			&position.MeasureTime,
-			&position.SendTime,
-			&position.ReceiveTime,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("parse row: %w", err)
-		}
+			var positions []Position
+			for rows.Next() {
+				var position PositionAtTime
+				err = rows.Scan(
+					&position.Longitude,
+					&position.Latitude,
+					&position.MeasureTime,
+					&position.SendTime,
+					&position.ReceiveTime,
+				)
+				if err != nil {
+					return nil, fmt.Errorf("parse row: %w", err)
+				}
 
-		if c.mode == "test" {
-			position.MeasureTime = time.Date(
-				upperBound.Year(),
-				upperBound.Month(),
-				upperBound.Day(),
-				upperBound.Hour(),
-				upperBound.Minute(),
-				position.MeasureTime.Second(),
-				position.MeasureTime.Nanosecond(),
-				position.MeasureTime.Location())
-			position.MeasureTime.Second()
-		}
-		positions = append(positions, position)
-	}
-	return positions, nil
+				if c.mode == "test" {
+					position.MeasureTime = time.Date(
+						upperBound.Year(),
+						upperBound.Month(),
+						upperBound.Day(),
+						upperBound.Hour(),
+						upperBound.Minute(),
+						position.MeasureTime.Second(),
+						position.MeasureTime.Nanosecond(),
+						position.MeasureTime.Location())
+					position.MeasureTime.Second()
+				}
+				positions = append(positions, Position{
+					Longitude: position.Longitude,
+					Latitude:  position.Latitude,
+					Time:      position.MeasureTime,
+				})
+			}
+			return positions, nil
+	*/
 }
 
 func (c *databaseClient) InsertPositions(ctx context.Context, position *DataServerReadMessageResponse) error {
@@ -162,7 +173,7 @@ func calculateDistanceInNM(oldLatitude, oldLongitude, newLatitude, newLongitude 
 	return math.Sqrt(deltaN*deltaN + deltaW*deltaW) // nautical miles
 }
 
-func calculateIfBuoysPassed(oldPosition, newPosition *PositionAtTime) ([]bool, error) {
+func calculateIfBuoysPassed(oldPosition, newPosition *Position) ([]bool, error) {
 	var isPassed []bool
 	for i := range buoys {
 		lat1, lon1 := calculateNewPosition(buoys[i].Latitude, buoys[i].Longitude, buoys[i].PassAngle+180, buoys[i].ToleranceInMeters)
