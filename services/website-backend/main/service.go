@@ -82,9 +82,9 @@ type storageInterface interface {
 	GetMode() string
 }
 
-func newRegattaService(storageClient databaseClient, dataServerURL string, pearlChainLength int, pearlChainStep float64, httpClient *http.Client) *regattaService {
+func newRegattaService(storageClient storageInterface, dataServerURL string, pearlChainLength int, pearlChainStep float64, httpClient *http.Client) *regattaService {
 	return &regattaService{
-		storageClient:    &storageClient,
+		storageClient:    storageClient,
 		dataServerURL:    dataServerURL,
 		httpClient:       httpClient,
 		boatStates:       make(map[string]*boatState),
@@ -111,6 +111,8 @@ func (s *regattaService) Ping(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *regattaService) FetchPosition(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("FetchPositions called")
+
 	enableCors(&w)
 
 	_ = r.Context()
@@ -131,47 +133,51 @@ func (s *regattaService) FetchPosition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	/*
-		positions, err := s.storageClient.GetPositions(context.Background(), m.Boat, time.Now(), 2) // m.NoLaterThan
-		if err != nil {
-			s.LogError(fmt.Errorf("get positions: %v", err))
-			return
-		}
+	positions, err := s.storageClient.GetPositions(context.Background(), m.Boat, time.Now(), 2)
+	fmt.Println(positions)
+	if err != nil {
+		s.LogError(fmt.Errorf("get positions: %v", err))
+		return
+	}
 
-		if positions == nil {
-			return
-		}
+	if positions == nil {
+		return
+	}
 
-		if len(positions) == 0 {
-			return
-		}
-	*/
+	if len(positions) == 0 {
+		return
+	}
 
-	/*
-		var heading float64
-		var additionalDistance float64
+	var heading float64
+	var additionalDistance float64
 
-		if len(positions) == 2 {
-			heading = calculateHeading(
-				positions[1].Latitude,
-				positions[1].Longitude,
-				positions[0].Latitude,
-				positions[0].Longitude,
-			)
-			additionalDistance = calculateDistanceInNM(
-				positions[1].Latitude,
-				positions[1].Longitude,
-				positions[0].Latitude,
-				positions[0].Longitude,
-			)
-		}
-		s.distance += additionalDistance
-		timeDeltaInSeconds := positions[0].MeasureTime.Sub(positions[1].MeasureTime).Seconds()
-		velocity := additionalDistance * 3600 / timeDeltaInSeconds // knots
-		if timeDeltaInSeconds == 0 {
-			velocity = 0
-		}
-	*/
+	if len(positions) == 2 {
+		heading = calculateHeading(
+			positions[1].Latitude,
+			positions[1].Longitude,
+			positions[0].Latitude,
+			positions[0].Longitude,
+		)
+		additionalDistance = calculateDistanceInNM(
+			positions[1].Latitude,
+			positions[1].Longitude,
+			positions[0].Latitude,
+			positions[0].Longitude,
+		)
+	}
+
+	s.boatStates[m.Boat].distance += additionalDistance
+
+	var timeDeltaInSeconds float64
+	if len(positions) > 1 {
+		timeDeltaInSeconds = positions[0].MeasureTime.Sub(positions[1].MeasureTime).Seconds()
+	}
+	velocity := additionalDistance * 3600 / timeDeltaInSeconds // knots
+	if timeDeltaInSeconds == 0 {
+		velocity = 0
+	}
+	s.boatStates[m.Boat].velocity = velocity
+	s.boatStates[m.Boat].heading = heading
 
 	crew, ok := roundToCrew[s.boatStates[m.Boat].currentRound]
 	if !ok {
@@ -189,8 +195,8 @@ func (s *regattaService) FetchPosition(w http.ResponseWriter, r *http.Request) {
 
 	response := FetchPositionResponse{
 		MeasureTime: lastPosition.MeasureTime,
-		Latitude:    lastPosition.Latitude,
-		Longitude:   lastPosition.Longitude,
+		Latitude:    positions[0].Latitude,  // lastPosition.Latitude
+		Longitude:   positions[0].Longitude, // lastPosition.Longitude
 		Heading:     s.boatStates[m.Boat].heading,
 		Distance:    s.boatStates[m.Boat].distance,
 		Velocity:    s.boatStates[m.Boat].velocity,
@@ -220,6 +226,8 @@ func (s *regattaService) FetchPosition(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *regattaService) FetchPearlChain(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("FetchPearlChain called")
+
 	enableCors(&w)
 
 	_ = r.Context()
@@ -292,6 +300,8 @@ func (s *regattaService) FetchPearlChain(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *regattaService) FetchRoundTimes(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("FetchRoundTimes called")
+
 	enableCors(&w)
 
 	_ = r.Context()
@@ -342,6 +352,8 @@ func (s *regattaService) FetchRoundTimes(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *regattaService) ReceiveDataTicker(done chan struct{}) {
+	fmt.Println("Starting ticker")
+
 	interruptChannel := make(chan os.Signal, 1)
 	signal.Notify(interruptChannel, os.Interrupt)
 
@@ -369,6 +381,8 @@ func (s *regattaService) ReceiveDataTicker(done chan struct{}) {
 }
 
 func (s *regattaService) ReceiveData(boat string) {
+	fmt.Printf("ReceiveData called for boat %q\n", boat)
+
 	if s.storageClient.GetMode() != "normal" && s.storageClient.GetMode() != "hackertalk" {
 		return
 	}

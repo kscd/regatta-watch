@@ -26,15 +26,20 @@ func main() {
 		log.Fatal("error loading config: ", err)
 	}
 
-	mode := "random"
+	mode := "fake"
 
-	storageClient, _ := newDatabaseClient(c.DBConfig, PositionAtTime{
-		Latitude:    53.5675975,
-		Longitude:   10.004,
-		MeasureTime: time.Time{},
-		SendTime:    time.Time{},
-		ReceiveTime: time.Time{},
-	}, mode)
+	var storageClient storageInterface
+	if mode == "fake" {
+		storageClient = newFakeStorage()
+	} else {
+		storageClient, _ = newDatabaseClient(c.DBConfig, PositionAtTime{
+			Latitude:    53.5675975,
+			Longitude:   10.004,
+			MeasureTime: time.Time{},
+			SendTime:    time.Time{},
+			ReceiveTime: time.Time{},
+		}, mode)
+	}
 
 	/*
 		certPool := x509.NewCertPool()
@@ -63,7 +68,7 @@ func main() {
 		pearlChainLength_ = 30
 		pearlChainStep = 60
 	}
-	regattaService := newRegattaService(*storageClient, c.DataServerURL, pearlChainLength_, pearlChainStep, client)
+	regattaService := newRegattaService(storageClient, c.DataServerURL, pearlChainLength_, pearlChainStep, client)
 	err = regattaService.ReinitialiseState("Bluebird")
 	if err != nil {
 		log.Fatal(`cannot initialise state for boat "Bluebird": `, err)
