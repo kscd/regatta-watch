@@ -1,8 +1,8 @@
 //import { useState } from 'react'
 import './App.css'
-import { Infoboard } from './InfoBoard.tsx'
-import { RoundTimeBoard } from './RoundTimeBoard.tsx'
-import { Map } from './Map.tsx'
+import { Infoboard } from './components/InfoBoard.tsx'
+import { RoundTimeBoard } from './components/RoundTimeBoard.tsx'
+import { Map } from './components/Map.tsx'
 //import { Ping } from './Ping.tsx'
 import { CountdownTimer } from './countdownTimer.tsx';
 import { useDataBase } from './hooks/useDataBase.tsx';
@@ -39,7 +39,7 @@ function App() {
             <div className="horizontal-line"></div>
             <CountdownTimer targetDate={regattaStartDate}/>
             <div className="horizontal-line"></div>
-            <RoundTimeBoard roundTimes={roundTime.roundTimes} sectionTimes={roundTime.sectionTimes}></RoundTimeBoard>
+            <RoundTimeBoard roundTimes={roundTime.round_times} sectionTimes={roundTime.section_times}></RoundTimeBoard>
         </div>
     </>
     )

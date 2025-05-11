@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import alsterImg from './assets/alster.png'
+import alsterImg from '../assets/alster.png'
 
 type Position = {latitude: number, longitude: number, heading: number};
 
@@ -154,4 +154,3 @@ Google maps picture: 650x1055, 1.623
 
 New Pictures:
 */
-

@@ -66,8 +66,8 @@ export type Position = {
 };
 
 export type RoundTime = {
-    roundTimes: number[];
-    sectionTimes: number[];
+    round_times: number[];
+    section_times: number[];
 };
 
 export type Status = string;
