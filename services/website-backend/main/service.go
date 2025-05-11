@@ -80,7 +80,6 @@ type storageInterface interface {
 	GetLastTwoPositions(_ context.Context, boat string, _ time.Time) (*LastTwoPositions, error)
 	GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error)
 	InsertPositions(ctx context.Context, position *DataServerReadMessageResponse) error
-	GetMode() string
 }
 
 func newRegattaService(storageClient storageInterface, dataServerURL string, pearlChainLength int, pearlChainStep float64, httpClient *http.Client) *regattaService {
@@ -134,6 +133,7 @@ func (s *regattaService) FetchPosition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: Handle when only ine location or zero are returned
 	positions, err := s.storageClient.GetLastTwoPositions(context.Background(), m.Boat, time.Now())
 	if err != nil {
 		s.LogError(fmt.Errorf("get positions: %v", err))
@@ -313,10 +313,10 @@ func (s *regattaService) FetchRoundTimes(w http.ResponseWriter, r *http.Request)
 
 	roundTimeCurrent := time.Now().Sub(s.boatStates[m.Boat].lastRoundTimestamp).Seconds()
 	sectionTimeCurrent := time.Now().Sub(s.boatStates[m.Boat].lastSectionTimestamp).Seconds()
-	if s.storageClient.GetMode() == "hackertalk" {
-		roundTimeCurrent = s.hackertalkTime.Sub(s.boatStates[m.Boat].lastRoundTimestamp).Seconds()
-		sectionTimeCurrent = s.hackertalkTime.Sub(s.boatStates[m.Boat].lastSectionTimestamp).Seconds()
-	}
+	//if s.storageClient.GetMode() == "hackertalk" {
+	//	roundTimeCurrent = s.hackertalkTime.Sub(s.boatStates[m.Boat].lastRoundTimestamp).Seconds()
+	//	sectionTimeCurrent = s.hackertalkTime.Sub(s.boatStates[m.Boat].lastSectionTimestamp).Seconds()
+	//}
 
 	response := FetchRoundTimeResponse{
 		RoundTimes:   append(s.boatStates[m.Boat].roundTimes, roundTimeCurrent),
@@ -347,9 +347,6 @@ func (s *regattaService) ReceiveDataTicker(done chan struct{}) {
 	signal.Notify(interruptChannel, os.Interrupt)
 
 	tickInterval := time.Second
-	if s.storageClient.GetMode() != "hackertalk" {
-		tickInterval = time.Second
-	}
 
 	ticker := time.NewTicker(tickInterval)
 	go func() {
@@ -372,14 +369,15 @@ func (s *regattaService) ReceiveDataTicker(done chan struct{}) {
 func (s *regattaService) ReceiveData(boat string) {
 	fmt.Printf("ReceiveData called for boat %q\n", boat)
 
-	if s.storageClient.GetMode() != "normal" && s.storageClient.GetMode() != "hackertalk" {
-		return
-	}
+	// TODO: remove when option to close receive call exists
+	//if s.storageClient.GetMode() != "normal" && s.storageClient.GetMode() != "hackertalk" {
+	//	return
+	//}
 
 	endTime := time.Now()
-	if s.storageClient.GetMode() == "hackertalk" {
-		endTime = s.hackertalkTime
-	}
+	//if s.storageClient.GetMode() == "hackertalk" {
+	//	endTime = s.hackertalkTime
+	//}
 
 	httpBody := &ReadMessageRequest{
 		Boat:      boat,
@@ -439,10 +437,10 @@ func (s *regattaService) ReceiveData(boat string) {
 		return
 	}
 
-	if s.storageClient.GetMode() == "hackertalk" {
-		s.hackertalkTime = s.hackertalkTime.Add(120 * time.Second)
-	}
-	s.updateState(boat, PostitionAtTimeToPosition(positions.PositionsAtTime), true)
+	//if s.storageClient.GetMode() == "hackertalk" {
+	//	s.hackertalkTime = s.hackertalkTime.Add(120 * time.Second)
+	//}
+	s.updateState(boat, PositionAtTimeToPosition(positions.PositionsAtTime), true)
 }
 
 func (s *regattaService) updateState(boat string, positions []Position, printBuoyUpdate bool) {
@@ -550,13 +548,13 @@ func (s *regattaService) ReinitialiseState(boat string) error {
 	var lastSectionTimestamp time.Time
 	var lastRoundTimestamp time.Time
 	if len(positions) == 0 {
-		if s.storageClient.GetMode() == "hackertalk" {
-			lastSectionTimestamp = time.Date(2024, time.August, 3, 11, 0, 0, 0, time.UTC)
-			lastRoundTimestamp = time.Date(2024, time.August, 3, 11, 0, 0, 0, time.UTC)
-		} else {
-			lastSectionTimestamp = time.Now()
-			lastRoundTimestamp = time.Now()
-		}
+		//if s.storageClient.GetMode() == "hackertalk" {
+		//	lastSectionTimestamp = time.Date(2024, time.August, 3, 11, 0, 0, 0, time.UTC)
+		//	lastRoundTimestamp = time.Date(2024, time.August, 3, 11, 0, 0, 0, time.UTC)
+		//} else {
+		lastSectionTimestamp = time.Now()
+		lastRoundTimestamp = time.Now()
+		//}
 	} else {
 		lastSectionTimestamp = positions[0].Time
 		lastRoundTimestamp = positions[0].Time
@@ -585,7 +583,7 @@ func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
 
-func PostitionAtTimeToPosition(p []PositionAtTime) []Position {
+func PositionAtTimeToPosition(p []PositionAtTime) []Position {
 	var positions []Position
 	for i := range p {
 		positions = append(positions, Position{

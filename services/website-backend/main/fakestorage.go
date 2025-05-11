@@ -39,14 +39,14 @@ func newFakeStorage() *fakeStorage {
 }
 
 type LastTwoPositions struct {
-	CurrentPosition Position
-	LastPosition    Position
+	CurrentPosition *Position
+	LastPosition    *Position
 }
 
 type Position struct {
 	Longitude float64   `json:"longitude"`
 	Latitude  float64   `json:"latitude"`
-	Time      time.Time `json:"measure_time"`
+	Time      time.Time `json:"time"`
 }
 
 func (fs *fakeStorage) GetLastTwoPositions(_ context.Context, boat string, _ time.Time) (*LastTwoPositions, error) {
@@ -74,8 +74,8 @@ func (fs *fakeStorage) GetLastTwoPositions(_ context.Context, boat string, _ tim
 	fs.oldHeadingByBoat[boat] = newHeading
 
 	return &LastTwoPositions{
-		CurrentPosition: currentPosition,
-		LastPosition:    lastPosition,
+		CurrentPosition: &currentPosition,
+		LastPosition:    &lastPosition,
 	}, nil
 }
 
@@ -97,7 +97,7 @@ func (fs *fakeStorage) GetPositions(_ context.Context, boat string, startTime, e
 	return positions, nil
 }
 
-func (fs *fakeStorage) InsertPositions(_ context.Context, position *DataServerReadMessageResponse) error {
+func (fs *fakeStorage) InsertPositions(_ context.Context, _ *DataServerReadMessageResponse) error {
 	return nil
 }
 

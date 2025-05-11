@@ -162,3 +162,91 @@ func calculateNewPosition(lat1, lon1, heading, distance float64) (float64, float
 
 	return lat2, lon2
 }
+
+// 0 degrees are north and the heading rotates clockwise
+func calculateHeading(oldLatitude, oldLongitude, newLatitude, newLongitude float64) float64 {
+	oldLatitudeRadians := oldLatitude * math.Pi / 180
+	oldLongitudeRadians := oldLongitude * math.Pi / 180
+	newLatitudeRadians := newLatitude * math.Pi / 180
+	newLongitudeRadians := newLongitude * math.Pi / 180
+
+	X := math.Cos(newLatitudeRadians) * math.Sin(newLongitudeRadians-oldLongitudeRadians)
+	Y := math.Cos(oldLatitudeRadians)*math.Sin(newLatitudeRadians) - math.Sin(oldLatitudeRadians)*math.Cos(newLatitudeRadians)*math.Cos(newLongitudeRadians-oldLongitudeRadians)
+	return math.Atan2(X, Y) * 180 / math.Pi
+}
+
+// uses euclidean geometry
+func calculateDistanceInNM(oldLatitude, oldLongitude, newLatitude, newLongitude float64) float64 {
+	cosLatitude := (math.Cos(newLatitude) + math.Cos(oldLatitude)) / 2
+	deltaN := (newLatitude - oldLatitude) * nauticalMilesPerDegree
+	deltaW := (newLongitude - oldLongitude) * nauticalMilesPerDegree * cosLatitude
+	return math.Sqrt(deltaN*deltaN + deltaW*deltaW) // nautical miles
+}
+
+func calculateIfBuoysPassed(oldPosition, newPosition *Position) ([]bool, error) {
+	var isPassed []bool
+	for i := range buoys {
+		lat1, lon1 := calculateNewPosition(buoys[i].Latitude, buoys[i].Longitude, buoys[i].PassAngle+180, buoys[i].ToleranceInMeters)
+		lat2, lon2 := calculateNewPosition(buoys[i].Latitude, buoys[i].Longitude, buoys[i].PassAngle, buoyFarOffPointDistance)
+
+		buoyLS := newLineSegment(lat1, lon1, lat2, lon2)
+		boatLS := newLineSegment(oldPosition.Latitude, oldPosition.Longitude, newPosition.Latitude, newPosition.Longitude)
+
+		isBuoyPassed, err := isIntersecting(buoyLS, boatLS)
+		if err != nil {
+			return nil, fmt.Errorf("error checking if buoys passed: %v", err)
+		}
+		if !isBuoyPassed {
+			isPassed = append(isPassed, false)
+			continue
+		}
+		isBuoyPassed = isPassDirectionCorrect(
+			lat1, lon1,
+			lat2, lon2,
+			oldPosition.Latitude, oldPosition.Longitude,
+			newPosition.Latitude, newPosition.Longitude,
+			buoys[i].IsPassDirectionClockwise,
+		)
+		isPassed = append(isPassed, isBuoyPassed)
+	}
+	return isPassed, nil
+}
+
+func isPassDirectionCorrect(buoyLat1, buoyLon1, buoyLat2, buoyLon2, boatLat1, boatLon1, boatLat2, boatLon2 float64, isPassDirectionClockwise bool) bool {
+	// For the three vectors buoy to buoy far off (vec a), buoy to boat old
+	// (vec b), buoy to boat new (vec c) calculate the polar angle and do
+	// some comparisons to figure out which way the boat rotated around the
+	// buoy.
+
+	vecAY := boatLat1 - buoyLat1
+	vecAX := (boatLon1 - buoyLon1) * math.Cos((boatLat1+buoyLat1)/2/180*math.Pi) // compensate for non-square coordinate system
+	vecBY := buoyLat2 - buoyLat1
+	vecBX := (buoyLon2 - buoyLon1) * math.Cos((buoyLat2+buoyLat1)/2/180*math.Pi)
+	vecCY := boatLat2 - buoyLat1
+	vecCX := (boatLon2 - buoyLon1) * math.Cos((boatLat2+buoyLat1)/2/180*math.Pi)
+
+	alpha := math.Atan2(vecAY, vecAX) * 180 / math.Pi
+	beta := math.Atan2(vecBY, vecBX) * 180 / math.Pi
+	gamma := math.Atan2(vecCY, vecCX) * 180 / math.Pi
+	alpha = math.Mod(alpha-beta, 360)
+	gamma = math.Mod(gamma-beta, 360)
+
+	if alpha >= 0 && gamma <= 0 {
+		// clockwise rotation
+		if isPassDirectionClockwise {
+			return true
+		}
+		return false
+	}
+
+	if alpha <= 0 && gamma >= 0 {
+		// anti-clockwise rotation
+		if isPassDirectionClockwise {
+			return false
+		}
+		return true
+	}
+
+	// something went wrong, there was never an intersection, return false
+	return false
+}

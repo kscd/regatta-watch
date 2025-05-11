@@ -32,13 +32,8 @@ func main() {
 	if mode == "fake" {
 		storageClient = newFakeStorage()
 	} else {
-		storageClient, _ = newDatabaseClient(c.DBConfig, PositionAtTime{
-			Latitude:    53.5675975,
-			Longitude:   10.004,
-			MeasureTime: time.Time{},
-			SendTime:    time.Time{},
-			ReceiveTime: time.Time{},
-		}, mode)
+		table := "positions_website_backend" // "positions_data_server_test"
+		storageClient, _ = newDatabaseClient(c.DBConfig, table)
 	}
 
 	/*
