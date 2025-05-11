@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"math/rand"
 	"time"
 )
 
@@ -45,44 +44,8 @@ func newDatabaseClient(config databaseConfig, initialPosition PositionAtTime, mo
 	}, nil
 }
 
-// GetRandomPosition ignore boat and upperBound for now
-func (c *databaseClient) GetRandomPosition(limit int) []PositionAtTime {
-	if limit > 1 {
-		// return pearl chain
-
-		numPositions := len(c.positions)
-
-		pearlLength := limit
-		if numPositions <= limit {
-			pearlLength = numPositions
-		}
-
-		return c.positions[numPositions-pearlLength:]
-	}
-
-	// create and return new position
-	lastPosition := c.positions[len(c.positions)-1]
-
-	newHeading := c.oldHeading + 30*rand.Float64() - 10
-	fakeVelocity := 0.0005 * rand.Float64()
-	newLatitude := lastPosition.Latitude + fakeVelocity*math.Cos(newHeading*math.Pi/180)
-	newLongitude := lastPosition.Longitude + fakeVelocity*math.Sin(newHeading*math.Pi/180)
-
-	newPosition := &PositionAtTime{
-		Latitude:    newLatitude,
-		Longitude:   newLongitude,
-		MeasureTime: time.Now(),
-	}
-
-	return []PositionAtTime{*newPosition}
-}
-
 // GetPositions positions are sorted descending
 func (c *databaseClient) GetPositions(ctx context.Context, boat string, upperBound time.Time, limit int) ([]PositionAtTime, error) {
-	if c.mode == "random" {
-		return c.GetRandomPosition(limit), nil
-	}
-
 	upperBoundFake := upperBound
 	table := "positions_website_backend"
 	if c.mode == "test" {
