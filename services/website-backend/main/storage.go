@@ -36,6 +36,7 @@ func newDatabaseClient(config databaseConfig, table string) (*databaseClient, er
 	}, nil
 }
 
+// GetLastTwoPositions returns the last two positions of a boat.
 func (c *databaseClient) GetLastTwoPositions(ctx context.Context, boat string, upperBound time.Time) (*LastTwoPositions, error) {
 	query := fmt.Sprintf(`
 		       SELECT longitude, latitude, measure_time
@@ -84,7 +85,8 @@ func (c *databaseClient) GetLastTwoPositions(ctx context.Context, boat string, u
 	}, nil
 }
 
-// GetPositions positions are sorted descending
+// GetPositions returns all positions of a boat in the given time range in
+// ascending order.
 func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error) {
 	query := fmt.Sprintf(`
 		       SELECT longitude, latitude, measure_time
@@ -120,7 +122,8 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTim
 	return positions, nil
 }
 
-func (c *databaseClient) InsertPositions(ctx context.Context, position *DataServerReadMessageResponse) error {
+// InsertPositions inserts a list of positions of a boat into the database.
+func (c *databaseClient) InsertPositions(ctx context.Context, boat string, position *DataServerReadMessageResponse) error {
 	if position == nil {
 		return errors.New("position is set to nil")
 	}
@@ -136,7 +139,7 @@ func (c *databaseClient) InsertPositions(ctx context.Context, position *DataServ
 		_, err := c.database.ExecContext(
 			ctx,
 			query,
-			"Bluebird",
+			boat,
 			position.PositionsAtTime[i].Longitude,
 			position.PositionsAtTime[i].Latitude,
 			position.PositionsAtTime[i].MeasureTime,

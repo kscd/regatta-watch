@@ -49,6 +49,9 @@ type Position struct {
 	Time      time.Time `json:"time"`
 }
 
+// GetLastTwoPositions generates a new position for the boat based on the last
+// position and a random heading and returns this position and the former
+// position of the boat.
 func (fs *fakeStorage) GetLastTwoPositions(_ context.Context, boat string, _ time.Time) (*LastTwoPositions, error) {
 	if boat != "Bluebird" && boat != "Vivace" {
 		return nil, fmt.Errorf("boat not found: %s", boat)
@@ -79,6 +82,8 @@ func (fs *fakeStorage) GetLastTwoPositions(_ context.Context, boat string, _ tim
 	}, nil
 }
 
+// GetPositions returns all positions of a boat in the given time range in
+// ascending order.
 func (fs *fakeStorage) GetPositions(_ context.Context, boat string, startTime, endTime time.Time) ([]Position, error) {
 	if boat != "Bluebird" && boat != "Vivace" {
 		return nil, fmt.Errorf("boat not found: %s", boat)
@@ -97,10 +102,7 @@ func (fs *fakeStorage) GetPositions(_ context.Context, boat string, startTime, e
 	return positions, nil
 }
 
-func (fs *fakeStorage) InsertPositions(_ context.Context, _ *DataServerReadMessageResponse) error {
+// InsertPositions does nothing in the fake storage
+func (fs *fakeStorage) InsertPositions(_ context.Context, _ string, _ *DataServerReadMessageResponse) error {
 	return nil
-}
-
-func (fs *fakeStorage) GetMode() string {
-	return "fake"
 }

@@ -79,7 +79,7 @@ type regattaService struct {
 type storageInterface interface {
 	GetLastTwoPositions(_ context.Context, boat string, _ time.Time) (*LastTwoPositions, error)
 	GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error)
-	InsertPositions(ctx context.Context, position *DataServerReadMessageResponse) error
+	InsertPositions(ctx context.Context, boat string, position *DataServerReadMessageResponse) error
 }
 
 func newRegattaService(storageClient storageInterface, dataServerURL string, pearlChainLength int, pearlChainStep float64, httpClient *http.Client) *regattaService {
@@ -430,7 +430,7 @@ func (s *regattaService) ReceiveData(boat string) {
 		return
 	}
 
-	err = s.storageClient.InsertPositions(context.Background(), positions)
+	err = s.storageClient.InsertPositions(context.Background(), "Bluebird", positions)
 	if err != nil {
 		err = fmt.Errorf("inserting positions: %w", err)
 		s.LogError(err)
