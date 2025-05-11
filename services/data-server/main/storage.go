@@ -76,7 +76,7 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, start ti
 	endTime := end
 
 	if c.mode == "test" {
-		table = "positions_data_server_test" // should have been positions_website_backend_test
+		table = "positions_data_server_test"
 		endTime = time.Date(2024, 01, 01, 00, 00, end.Second(), 0, time.UTC)
 		if endTime.Second() < startTime.Second() {
 			startTime = time.Date(2023, 12, 31, 23, 59, start.Second(), 0, time.UTC)

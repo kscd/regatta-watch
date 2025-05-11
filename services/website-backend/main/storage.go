@@ -130,7 +130,7 @@ func (c *databaseClient) InsertPositions(ctx context.Context, boat string, posit
 
 	query := fmt.Sprintf(`
        INSERT INTO %s(boat, longitude, latitude, measure_time, send_time) VALUES ($1, $2, $3, $4, $5);
-       `, "positions_website_backend")
+       `, c.table)
 
 	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
 	defer cancel()

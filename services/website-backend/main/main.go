@@ -26,13 +26,16 @@ func main() {
 		log.Fatal("error loading config: ", err)
 	}
 
-	mode := "fake"
+	mode := "test" // "fake", "test", "normal"
 
 	var storageClient storageInterface
 	if mode == "fake" {
 		storageClient = newFakeStorage()
-	} else {
-		table := "positions_website_backend" // "positions_data_server_test"
+	} else if mode == "test" {
+		table := "positions_website_backend_test"
+		storageClient, _ = newDatabaseClient(c.DBConfig, table)
+	} else if mode == "normal" {
+		table := "positions_website_backend"
 		storageClient, _ = newDatabaseClient(c.DBConfig, table)
 	}
 
@@ -97,7 +100,9 @@ func main() {
 	}()
 
 	fmt.Println("Service started and listening")
-	regattaService.ReceiveDataTicker(dataReceiverClosed)
+	if mode != "fake" {
+		regattaService.ReceiveDataTicker(dataReceiverClosed)
+	}
 	err = server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal("error in http handler: ", err)

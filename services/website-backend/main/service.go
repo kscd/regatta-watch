@@ -133,7 +133,7 @@ func (s *regattaService) FetchPosition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Handle when only ine location or zero are returned
+	// TODO: Handle when only one location or zero are returned
 	positions, err := s.storageClient.GetLastTwoPositions(context.Background(), m.Boat, time.Now())
 	if err != nil {
 		s.LogError(fmt.Errorf("get positions: %v", err))
@@ -537,7 +537,7 @@ func (s *regattaService) calculateIfBuoysPassed(boat string, positionOld, positi
 }
 
 func (s *regattaService) ReinitialiseState(boat string) error {
-	positions, err := s.storageClient.GetPositions(context.Background(), boat, time.Now().AddDate(0, 1, 0), time.Now())
+	positions, err := s.storageClient.GetPositions(context.Background(), boat, time.Now().AddDate(0, -1, 0), time.Now())
 	if err != nil {
 		err = fmt.Errorf("load all data: %w", err)
 		s.LogError(err)

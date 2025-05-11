@@ -22,7 +22,7 @@ func main() {
 		log.Fatal("error loading config: ", err)
 	}
 
-	dbClient, err := newDatabaseClient(c.DBConfig, "normal") // normal
+	dbClient, err := newDatabaseClient(c.DBConfig, "test") // normal
 	if err != nil {
 		log.Fatal(err)
 	}

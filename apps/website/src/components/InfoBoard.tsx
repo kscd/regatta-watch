@@ -38,43 +38,43 @@ export const Infoboard: React.FC<InfoboardProps> = ({ positionN, positionW, head
 );
 
 const calcLatitudeFromNumber = (a: number) => {
-      a = a > 90 ? 90 : a
-      a = a < -90? -90: a
+  a = a > 90 ? 90 : a
+  a = a < -90? -90: a
 
-      const char = a >= 0? "N" : "S"
-      const degree = Math.abs(Math.trunc(a))
-      const minute = (Math.abs(a) - degree)*60
-      return `${degree}° ${minuteFormat.format(minute)}' ${char}`
-    };
+  const char = a >= 0? "N" : "S"
+  const degree = Math.abs(Math.trunc(a))
+  const minute = (Math.abs(a) - degree)*60
+  return `${degree}° ${minuteFormat.format(minute)}' ${char}`
+};
 
-      const calcLongitudeFromNumber = (a: number) => {
-      a = (a + 180) % 360 - 180
+const calcLongitudeFromNumber = (a: number) => {
+  a = (a + 180) % 360 - 180
 
-      const char = a >= 0 || a == 180 ? "E" : "W"
-      const degree = Math.abs(Math.trunc(a))
-      const minute = (Math.abs(a) - degree)*60
-      return `${degree}° ${minuteFormat.format(minute)}' ${char}`
-    };
+  const char = a >= 0 || a == 180 ? "E" : "W"
+  const degree = Math.abs(Math.trunc(a))
+  const minute = (Math.abs(a) - degree)*60
+  return `${degree}° ${minuteFormat.format(minute)}' ${char}`
+};
 
-      const calcHeadingFromNumber = (a: number) => {
-      a = ((a % 360) + 360) % 360 // positive-only modulo
+const calcHeadingFromNumber = (a: number) => {
+  a = ((a % 360) + 360) % 360 // positive-only modulo
 
-      const degree = Math.trunc(a)
-      return `${degree}°`
-    };
+  const degree = Math.trunc(a)
+  return `${degree}°`
+};
 
-      const minuteFormat = new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3,
-      minimumIntegerDigits: 2,
-    });
+const minuteFormat = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 3,
+  maximumFractionDigits: 3,
+  minimumIntegerDigits: 2,
+});
 
-      const velocityFormat = new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    });
+const velocityFormat = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 
-      const distanceFormat = new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+const distanceFormat = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
