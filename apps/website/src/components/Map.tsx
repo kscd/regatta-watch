@@ -1,9 +1,10 @@
 import React, { useRef, useEffect } from 'react';
 import alsterImg from '../assets/alster.png'
+import {PearlChain} from "../services/boatService.tsx";
 
 type Position = {latitude: number, longitude: number, heading: number};
 
-type MapProps = {positionN: number; positionW: number; heading: number; pearlChain: Position[]};
+type MapProps = {positionN: number; positionW: number; heading: number; pearlChain: PearlChain};
 
 export const Map: React.FC<MapProps> = ({ positionN, positionW, heading, pearlChain}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -37,7 +38,7 @@ export const Map: React.FC<MapProps> = ({ positionN, positionW, heading, pearlCh
           drawBuoys(buoy1);
           drawBuoys(buoy2);
           drawBuoys(buoy3);
-          drawPearlChain(pearlChain);
+          drawPearlChain(pearlChain.positions);
           drawPosition(positionN, positionW, heading);
         };       
       };

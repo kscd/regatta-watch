@@ -11,7 +11,7 @@ const getPosition = async (boat: string): Promise<BoatInfo> => {
     return response.json();
 }
 
-const getPearlChain = async (boat: string): Promise<Position[]> => {
+const getPearlChain = async (boat: string): Promise<PearlChain> => {
     const response = await fetch('http://localhost:8091/fetchpearlchain',
         {
             method: 'POST',
@@ -58,6 +58,10 @@ export type BoatInfo = {
     next_crew0: string;
     next_crew1: string;
 };
+
+export type PearlChain = {
+    positions: Position[];
+}
 
 export type Position = {
     latitude: number;
