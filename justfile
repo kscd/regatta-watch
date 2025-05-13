@@ -1,7 +1,10 @@
 root := `git rev-parse --show-toplevel`
 
-db_directory := root/".postgres"
+db_directory := root/"postgres"
 db_port := "5433"
+
+default:
+    @just --list
 
 build-go:
     CGO_ENABLED="0" go build -o bin/main ./main

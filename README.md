@@ -1,17 +1,20 @@
 ## Run book
 
-First start the backends with the command
+Start the data-server by going to `services/data-server/main` and running
 ```sh
 go run .
 ```
-Then start the frontend of the website
+Then go to `services/website-backend/main` and run
+```sh
+go run .
+```
+to also start the website backend. The website backend is a local copy of the
+data server to reduce the required bandwidth.
+
+Then start the frontend of the website by going to `apps/website` and running
 ```sh
 pnpm run dev
-```
-
-The backend has the 
-
-
+``` 
 
 ## Make new database ready (mac)
 
@@ -63,6 +66,31 @@ CREATE TABLE IF NOT EXISTS positions_website_backend (
 );
 ```
 
+Testing
+```postgresql
+CREATE TABLE IF NOT EXISTS positions_data_server_test (
+    id BIGSERIAL PRIMARY KEY,
+    boat text NOT NULL DEFAULT '',
+    longitude pg_catalog.float8 NOT NULL DEFAULT 0.0,
+    latitude pg_catalog.float8 NOT NULL DEFAULT 0.0,
+    measure_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
+    send_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
+    receive_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+```postgresql
+CREATE TABLE IF NOT EXISTS positions_website_backend_test (
+    id BIGSERIAL PRIMARY KEY,
+    boat text NOT NULL DEFAULT '',
+    longitude pg_catalog.float8 NOT NULL DEFAULT 0.0,
+    latitude pg_catalog.float8 NOT NULL DEFAULT 0.0,
+    measure_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
+    send_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
+    receive_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
 List the tables
 ```postgresql
 \dt
@@ -78,6 +106,8 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO regatta;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO regatta;
 ```
 and give it the rights it needs in the database.
+
+cd to `/jobs/database_testdata/main` and run `go run .` to create test data.
 
 ## Other useful SQL commands
 
