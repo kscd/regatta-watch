@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "@mui/material": "^7.1.0",
+    "@mui/x-data-grid": "^8.3.0",
     "react-toggle": "^4.1.3"
   }
 }
