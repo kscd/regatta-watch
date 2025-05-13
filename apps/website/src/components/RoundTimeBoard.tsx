@@ -22,12 +22,12 @@ export const RoundTimeBoard: React.FC<RoundTimeBoardProps> = ({ roundTimes, sect
     const sectionTimeRows = chunkArray(sectionTimesArray, 4);
 
     const columns: GridColDef[] = [
-        { field: 'round', headerName: '', width: 70, cellClassName: 'bold-column-cell' },
-        { field: 'sectionTime1', headerName: 'Section 1', width: 110 },
-        { field: 'sectionTime2', headerName: 'Section 2', width: 110 },
-        { field: 'sectionTime3', headerName: 'Section 3', width: 110 },
-        { field: 'sectionTime4', headerName: 'Section 4', width: 110 },
-        { field: 'roundTime', headerName: 'Round Time', width: 130, cellClassName: 'bold-column-cell' },
+        { field: 'round', headerName: '', width: 70, cellClassName: 'bold-column-cell', resizable: false },
+        { field: 'sectionTime1', headerName: 'Section 1', width: 110, resizable: false },
+        { field: 'sectionTime2', headerName: 'Section 2', width: 110, resizable: false },
+        { field: 'sectionTime3', headerName: 'Section 3', width: 110, resizable: false },
+        { field: 'sectionTime4', headerName: 'Section 4', width: 110, resizable: false },
+        { field: 'roundTime', headerName: 'Round Time', width: 130, cellClassName: 'bold-column-cell', resizable: false },
     ];
 
     const rows = roundTimesArray.map((roundTime, roundIndex) => {
