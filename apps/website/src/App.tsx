@@ -26,22 +26,20 @@ function App() {
 
   // const uptimeCount = useUptime();
     return (
-    <>
-      <div style={{float:"left", marginRight:20}}>
+    <div className={"page-container"}>
+      <div className={"map-container"}>
         <Map positionN={position.latitude} positionW={position.longitude} heading={position.heading} pearlChain={pearlChain} />
       </div>
-        <div style={{float: "right", backgroundColor: "#707070"}}>
-            <h2 className="boat-name">PSC Bluebird (Conger)</h2>
-            <Infoboard positionN={position.latitude} positionW={position.longitude} heading={position.heading}
+      <div className={"boat-container"}>
+        <h2 className="boat-name">PSC Bluebird (Conger)</h2>
+        <Infoboard positionN={position.latitude} positionW={position.longitude} heading={position.heading}
                        velocity={position.velocity} distance={position.distance} round={position.round}
                        section={position.section} crew0={position.crew0} crew1={position.crew1}
                        nextCrew0={position.next_crew0} nextCrew1={position.next_crew1}/>
-            <div className="horizontal-line"></div>
-            <CountdownTimer targetDate={regattaStartDate}/>
-            <div className="horizontal-line"></div>
-            <RoundTimeBoard roundTimes={roundTime.round_times} sectionTimes={roundTime.section_times}></RoundTimeBoard>
-        </div>
-    </>
+        <CountdownTimer targetDate={regattaStartDate}/>
+        <RoundTimeBoard roundTimes={roundTime.round_times} sectionTimes={roundTime.section_times}></RoundTimeBoard>
+      </div>
+    </div>
     )
 }
 
