@@ -94,7 +94,7 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTim
 			   WHERE boat = $1
 			   AND measure_time > $2
 			   AND measure_time <= $3
-			   ORDER BY measure_time ASC
+			   ORDER BY measure_time DESC
 		       `, c.table)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second)

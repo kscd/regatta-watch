@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"time"
 )
 
@@ -219,7 +220,7 @@ func (s *regattaService) FetchPearlChain(w http.ResponseWriter, r *http.Request)
 
 	enableCors(&w)
 
-	_ = r.Context()
+	ctx := r.Context()
 
 	// parse data from request
 	var m FetchPearlChainRequest
@@ -237,39 +238,48 @@ func (s *regattaService) FetchPearlChain(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	/*positions, err := s.storageClient.GetPositions(context.Background(), m.Boat, time.Now(), pearlChainLength+1) // m.NoLaterThan
+	// Example, last 20 seconds and 10 positions
+	pearlChainLength := 5
+	pearlChainTime := 20 * time.Second
+
+	endTime := time.Now()
+	startTime := endTime.Add(-pearlChainTime)
+
+	// positions sorted in descending order
+	positions, err := s.storageClient.GetPositions(ctx, m.Boat, startTime, endTime)
 	if err != nil {
 		fmt.Printf("/fetchposition get positions: %v", err)
 		return
 	}
 
-	// positions are the wrong way, have to fix this when re-doing the pearl chain
-	reverseSlice(positions)
+	// TODO: If insufficient data points are available, return an empty response, need at least 2.
 
-	pearlLength := pearlChainLength
-	if len(positions) < pearlChainLength+1 {
-		pearlLength = len(positions) - 1 // 1 offset for heading calculations
+	// TODO: Also add a mode for static chain links. Can do this with a bit of book keeping by manipulating the
+	// initial value of nextStop.
+
+	// Calculate the time step for the pearl chain from database data
+	db_endTime := positions[0].Time
+	db_startTime := positions[len(positions)-2].Time                                 // need an offset of 1 for heading calculation
+	pearlChainStep := db_endTime.Sub(db_startTime) / time.Duration(pearlChainLength) // time.Duration is needed for type matching
+	nextStop := endTime.Add(-pearlChainStep)
+
+	var pearlChain []position
+	for index := range positions {
+		if positions[index].Time.Sub(nextStop) < 0 && index+1 < len(positions)-1 {
+			pearlChain = append(pearlChain, position{
+				Latitude:  positions[index].Latitude,
+				Longitude: positions[index].Longitude,
+				Heading: calculateHeading(
+					positions[index].Latitude,
+					positions[index].Longitude,
+					positions[index+1].Latitude,
+					positions[index+1].Longitude),
+			})
+			nextStop = nextStop.Add(-pearlChainStep)
+		}
 	}
 
-	var pearlChainPositions []position
-	for i := 0; i < pearlLength; i++ {
-		heading := calculateHeading(
-			positions[i+1].Latitude,
-			positions[i+1].Longitude,
-			positions[i].Latitude,
-			positions[i].Longitude)
-
-		pearlChainPositions = append(pearlChainPositions,
-			position{
-				Latitude:  positions[i].Latitude,
-				Longitude: positions[i].Longitude,
-				Heading:   heading,
-			},
-		)
-	}
-	*/
-
-	response := FetchPearlChainResponse{Positions: s.boatStates[m.Boat].pearlChainPositions}
+	response := FetchPearlChainResponse{Positions: pearlChain}
 
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
@@ -543,6 +553,8 @@ func (s *regattaService) ReinitialiseState(boat string) error {
 		s.LogError(err)
 		return err
 	}
+
+	slices.Reverse(positions)
 
 	// TODO: change before regatta starts, this is the regatta start time
 	var lastSectionTimestamp time.Time
