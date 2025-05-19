@@ -75,6 +75,11 @@ type regattaService struct {
 	pearlChainLength int
 	pearlChainStep   float64
 	hackertalkTime   time.Time
+	clock            clockInterface
+}
+
+type clockInterface interface {
+	Now() time.Time
 }
 
 type storageInterface interface {
@@ -92,6 +97,7 @@ func newRegattaService(storageClient storageInterface, dataServerURL string, pea
 		pearlChainLength: pearlChainLength,
 		pearlChainStep:   pearlChainStep,
 		hackertalkTime:   time.Date(2024, 8, 3, 10, 0, 0, 0, time.UTC),
+		clock:            newClock(),
 	}
 }
 
@@ -135,7 +141,7 @@ func (s *regattaService) FetchPosition(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Handle when only one location or zero are returned
-	positions, err := s.storageClient.GetLastTwoPositions(context.Background(), m.Boat, time.Now())
+	positions, err := s.storageClient.GetLastTwoPositions(context.Background(), m.Boat, s.clock.Now())
 	if err != nil {
 		s.LogError(fmt.Errorf("get positions: %v", err))
 		return
@@ -242,7 +248,7 @@ func (s *regattaService) FetchPearlChain(w http.ResponseWriter, r *http.Request)
 	pearlChainLength := 5
 	pearlChainTime := 20 * time.Second
 
-	endTime := time.Now()
+	endTime := s.clock.Now()
 	startTime := endTime.Add(-pearlChainTime)
 
 	// positions sorted in descending order
@@ -321,8 +327,9 @@ func (s *regattaService) FetchRoundTimes(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	roundTimeCurrent := time.Now().Sub(s.boatStates[m.Boat].lastRoundTimestamp).Seconds()
-	sectionTimeCurrent := time.Now().Sub(s.boatStates[m.Boat].lastSectionTimestamp).Seconds()
+	now := s.clock.Now()
+	roundTimeCurrent := now.Sub(s.boatStates[m.Boat].lastRoundTimestamp).Seconds()
+	sectionTimeCurrent := now.Sub(s.boatStates[m.Boat].lastSectionTimestamp).Seconds()
 	//if s.storageClient.GetMode() == "hackertalk" {
 	//	roundTimeCurrent = s.hackertalkTime.Sub(s.boatStates[m.Boat].lastRoundTimestamp).Seconds()
 	//	sectionTimeCurrent = s.hackertalkTime.Sub(s.boatStates[m.Boat].lastSectionTimestamp).Seconds()
@@ -384,7 +391,7 @@ func (s *regattaService) ReceiveData(boat string) {
 	//	return
 	//}
 
-	endTime := time.Now()
+	endTime := s.clock.Now()
 	//if s.storageClient.GetMode() == "hackertalk" {
 	//	endTime = s.hackertalkTime
 	//}
@@ -547,7 +554,9 @@ func (s *regattaService) calculateIfBuoysPassed(boat string, positionOld, positi
 }
 
 func (s *regattaService) ReinitialiseState(boat string) error {
-	positions, err := s.storageClient.GetPositions(context.Background(), boat, time.Now().AddDate(0, -1, 0), time.Now())
+	now := s.clock.Now()
+
+	positions, err := s.storageClient.GetPositions(context.Background(), boat, now.AddDate(0, -1, 0), now)
 	if err != nil {
 		err = fmt.Errorf("load all data: %w", err)
 		s.LogError(err)
@@ -564,8 +573,9 @@ func (s *regattaService) ReinitialiseState(boat string) error {
 		//	lastSectionTimestamp = time.Date(2024, time.August, 3, 11, 0, 0, 0, time.UTC)
 		//	lastRoundTimestamp = time.Date(2024, time.August, 3, 11, 0, 0, 0, time.UTC)
 		//} else {
-		lastSectionTimestamp = time.Now()
-		lastRoundTimestamp = time.Now()
+
+		lastSectionTimestamp = now
+		lastRoundTimestamp = now
 		//}
 	} else {
 		lastSectionTimestamp = positions[0].Time
