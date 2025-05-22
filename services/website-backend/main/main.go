@@ -66,7 +66,14 @@ func main() {
 		pearlChainLength_ = 30
 		pearlChainStep = 60
 	}
-	regattaService := newRegattaService(storageClient, c.DataServerURL, pearlChainLength_, pearlChainStep, client)
+	regattaService := newRegattaService(
+		storageClient,
+		c.DataServerURL,
+		pearlChainLength_,
+		pearlChainStep,
+		c.RegattaStartTime,
+		c.RegattaEndTime,
+		client)
 	err = regattaService.ReinitialiseState("Bluebird")
 	if err != nil {
 		log.Fatal(`cannot initialise state for boat "Bluebird": `, err)

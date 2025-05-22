@@ -4,13 +4,16 @@ import (
 	"errors"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
 
 type config struct {
-	DBConfig      databaseConfig
-	DataServerURL string
+	DBConfig         databaseConfig
+	DataServerURL    string
+	RegattaStartTime time.Time
+	RegattaEndTime   time.Time
 }
 
 func loadConfig() (*config, error) {
@@ -53,6 +56,24 @@ func loadConfig() (*config, error) {
 		return nil, errors.New("DATA_SERVER_URL was not defined")
 	}
 
+	regattaStartTimeRaw, ok := os.LookupEnv("REGATTA_START_TIME")
+	if !ok {
+		return nil, errors.New("REGATTA_START_TIME was not defined")
+	}
+	regattaStartTime, err := time.Parse(time.RFC3339, regattaStartTimeRaw)
+	if err != nil {
+		return nil, errors.New("error parsing REGATTA_START_TIME")
+	}
+
+	regattaEndTimeRaw, ok := os.LookupEnv("REGATTA_END_TIME")
+	if !ok {
+		return nil, errors.New("REGATTA_END_TIME was not defined")
+	}
+	regattaEndTime, err := time.Parse(time.RFC3339, regattaEndTimeRaw)
+	if err != nil {
+		return nil, errors.New("error parsing REGATTA_END_TIME")
+	}
+
 	dbConfig := databaseConfig{
 		Host:         host,
 		Port:         port,
@@ -62,7 +83,9 @@ func loadConfig() (*config, error) {
 	}
 
 	return &config{
-		DBConfig:      dbConfig,
-		DataServerURL: dataServerURL,
+		DBConfig:         dbConfig,
+		DataServerURL:    dataServerURL,
+		RegattaStartTime: regattaStartTime,
+		RegattaEndTime:   regattaEndTime,
 	}, nil
 }
