@@ -17,7 +17,6 @@ import (
 const (
 	nauticalMilesPerDegree  = 60
 	buoyFarOffPointDistance = 1000
-	pearlChainLength        = 10
 )
 
 var buoys = []buoy{
@@ -61,8 +60,6 @@ type boatState struct {
 	lastRoundTimestamp     time.Time
 	lastDataPointTimestamp time.Time
 	lastPosition           *Position
-	pearlChainPositions    []position
-	pearlChainTimes        []time.Time
 }
 
 type regattaService struct {
@@ -271,9 +268,9 @@ func (s *regattaService) FetchPearlChain(w http.ResponseWriter, r *http.Request)
 	// initial value of nextStop.
 
 	// Calculate the time step for the pearl chain from database data
-	db_endTime := positions[0].Time
-	db_startTime := positions[len(positions)-2].Time                                 // need an offset of 1 for heading calculation
-	pearlChainStep := db_endTime.Sub(db_startTime) / time.Duration(pearlChainLength) // time.Duration is needed for type matching
+	dbEndTime := positions[0].Time
+	dbStartTime := positions[len(positions)-2].Time                                // need an offset of 1 for heading calculation
+	pearlChainStep := dbEndTime.Sub(dbStartTime) / time.Duration(pearlChainLength) // time.Duration is needed for type matching
 	nextStop := endTime.Add(-pearlChainStep)
 
 	var pearlChain []position
@@ -444,7 +441,7 @@ func (s *regattaService) ReceiveData(boat string) {
 		return
 	}
 
-	err = s.storageClient.InsertPositions(context.Background(), "Bluebird", positions)
+	err = s.storageClient.InsertPositions(context.Background(), boat, positions)
 	if err != nil {
 		err = fmt.Errorf("inserting positions: %w", err)
 		s.LogError(err)
@@ -469,8 +466,6 @@ func (s *regattaService) updateState(boat string, positions []Position, printBuo
 			}
 			currentPosition := positions[i]
 
-			heading := calculateHeading(s.boatStates[boat].lastPosition.Latitude, s.boatStates[boat].lastPosition.Longitude, currentPosition.Latitude, currentPosition.Longitude)
-
 			additionalDistance := calculateDistanceInNM(s.boatStates[boat].lastPosition.Latitude, s.boatStates[boat].lastPosition.Longitude, currentPosition.Latitude, currentPosition.Longitude)
 			s.boatStates[boat].distance += additionalDistance
 
@@ -478,27 +473,6 @@ func (s *regattaService) updateState(boat string, positions []Position, printBuo
 			s.calculateIfBuoysPassed(boat, s.boatStates[boat].lastPosition, &currentPosition, printBuoyUpdate)
 
 			s.boatStates[boat].lastPosition = &currentPosition
-
-			// Update Pearl Chain
-			lenPC := len(s.boatStates[boat].pearlChainPositions)
-			var lastPCTime time.Time
-			if lenPC > 0 {
-				lastPCTime = s.boatStates[boat].pearlChainTimes[lenPC-1]
-			} else {
-				lastPCTime = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
-			}
-			if currentPosition.Time.Sub(lastPCTime).Seconds() > s.pearlChainStep {
-				s.boatStates[boat].pearlChainPositions = append(s.boatStates[boat].pearlChainPositions, position{
-					Latitude:  currentPosition.Latitude,
-					Longitude: currentPosition.Longitude,
-					Heading:   heading,
-				})
-				s.boatStates[boat].pearlChainTimes = append(s.boatStates[boat].pearlChainTimes, currentPosition.Time)
-				if lenPC+1 > s.pearlChainLength {
-					s.boatStates[boat].pearlChainPositions = s.boatStates[boat].pearlChainPositions[1:]
-					s.boatStates[boat].pearlChainTimes = s.boatStates[boat].pearlChainTimes[1:]
-				}
-			}
 
 			if i%1000 == 0 && i > 0 {
 				fmt.Printf("positions analysed: %d\n", i)
