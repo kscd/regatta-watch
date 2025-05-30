@@ -22,11 +22,6 @@ type databaseConfig struct {
 	UserPassword string
 }
 
-type LastTwoPositions struct {
-	CurrentPosition *Position
-	LastPosition    *Position
-}
-
 type Position struct {
 	Latitude  float64   `json:"latitude"`
 	Longitude float64   `json:"longitude"`
