@@ -38,21 +38,29 @@ func newFakeStorage() *fakeStorage {
 	}
 }
 
-type LastTwoPositions struct {
-	CurrentPosition *Position
-	LastPosition    *Position
+func (fs *fakeStorage) GetPositions(_ context.Context, boat string, startTime, endTime time.Time) ([]Position, error) {
+	if boat != "Bluebird" && boat != "Vivace" {
+		return nil, fmt.Errorf("boat not found: %s", boat)
+	}
+
+	var positions []Position
+	for _, pos := range fs.positionsByBoat[boat] {
+		if pos.Time.Before(startTime) {
+			continue
+		} else if pos.Time.After(endTime) {
+			break
+		}
+		positions = append(positions, pos)
+	}
+
+	return positions, nil
 }
 
-type Position struct {
-	Longitude float64   `json:"longitude"`
-	Latitude  float64   `json:"latitude"`
-	Time      time.Time `json:"time"`
+func (fs *fakeStorage) InsertPositions(_ context.Context, _ string, _ []StoragePosition) error {
+	return nil
 }
 
-// GetLastTwoPositions generates a new position for the boat based on the last
-// position and a random heading and returns this position and the former
-// position of the boat.
-func (fs *fakeStorage) GetLastTwoPositions(_ context.Context, boat string, _ time.Time) (*LastTwoPositions, error) {
+func (fs *fakeStorage) GetLastPosition(_ context.Context, boat string, _, _ time.Time) (*StoragePosition, error) {
 	if boat != "Bluebird" && boat != "Vivace" {
 		return nil, fmt.Errorf("boat not found: %s", boat)
 	}
@@ -76,33 +84,11 @@ func (fs *fakeStorage) GetLastTwoPositions(_ context.Context, boat string, _ tim
 	fs.positionsByBoat[boat] = append(fs.positionsByBoat[boat], currentPosition)
 	fs.oldHeadingByBoat[boat] = newHeading
 
-	return &LastTwoPositions{
-		CurrentPosition: &currentPosition,
-		LastPosition:    &lastPosition,
+	return &StoragePosition{
+		Longitude: lastPosition.Longitude,
+		Latitude:  lastPosition.Latitude,
+		Heading:   newHeading,
+		Velocity:  fakeVelocity,
+		Distance:  lastPosition.Distance,
 	}, nil
-}
-
-// GetPositions returns all positions of a boat in the given time range in
-// ascending order.
-func (fs *fakeStorage) GetPositions(_ context.Context, boat string, startTime, endTime time.Time) ([]Position, error) {
-	if boat != "Bluebird" && boat != "Vivace" {
-		return nil, fmt.Errorf("boat not found: %s", boat)
-	}
-
-	var positions []Position
-	for _, pos := range fs.positionsByBoat[boat] {
-		if pos.Time.Before(startTime) {
-			continue
-		} else if pos.Time.After(endTime) {
-			break
-		}
-		positions = append(positions, pos)
-	}
-
-	return positions, nil
-}
-
-// InsertPositions does nothing in the fake storage
-func (fs *fakeStorage) InsertPositions(_ context.Context, _ string, _ *DataServerReadMessageResponse) error {
-	return nil
 }

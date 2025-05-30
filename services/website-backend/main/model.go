@@ -48,8 +48,8 @@ type buoy struct {
 }
 
 type PositionAtTime struct {
-	Longitude   float64   `json:"longitude"`
 	Latitude    float64   `json:"latitude"`
+	Longitude   float64   `json:"longitude"`
 	MeasureTime time.Time `json:"measure_time"`
 	SendTime    time.Time `json:"send_time"`
 	ReceiveTime time.Time `json:"receive_time"`

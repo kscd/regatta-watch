@@ -62,7 +62,10 @@ CREATE TABLE IF NOT EXISTS positions_website_backend (
     latitude pg_catalog.float8 NOT NULL DEFAULT 0.0,
     measure_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
     send_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
-    receive_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+    receive_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    distance pg_catalog.float8 NOT NULL DEFAULT 0.0,
+    heading pg_catalog.float8 NOT NULL DEFAULT 0.0,
+    velocity pg_catalog.float8 NOT NULL DEFAULT 0.0
 );
 ```
 
@@ -87,7 +90,10 @@ CREATE TABLE IF NOT EXISTS positions_website_backend_test (
     latitude pg_catalog.float8 NOT NULL DEFAULT 0.0,
     measure_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
     send_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
-    receive_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+    receive_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    distance pg_catalog.float8 NOT NULL DEFAULT 0.0,
+    heading pg_catalog.float8 NOT NULL DEFAULT 0.0,
+    velocity pg_catalog.float8 NOT NULL DEFAULT 0.0
 );
 ```
 

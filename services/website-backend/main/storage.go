@@ -22,6 +22,28 @@ type databaseConfig struct {
 	UserPassword string
 }
 
+type LastTwoPositions struct {
+	CurrentPosition *Position
+	LastPosition    *Position
+}
+
+type Position struct {
+	Latitude  float64   `json:"latitude"`
+	Longitude float64   `json:"longitude"`
+	Distance  float64   `json:"distance"`
+	Time      time.Time `json:"time"`
+}
+
+type StoragePosition struct {
+	Latitude    float64   `json:"latitude"`
+	Longitude   float64   `json:"longitude"`
+	Distance    float64   `json:"distance"`
+	Heading     float64   `json:"heading"`
+	Velocity    float64   `json:"velocity"`
+	MeasureTime time.Time `json:"measure_time"`
+	SendTime    time.Time `json:"send_time"`
+}
+
 func newDatabaseClient(config databaseConfig, table string) (*databaseClient, error) {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password='%s' dbname=%s sslmode=disable",
 		config.Host, config.Port, config.UserName, config.UserPassword, config.DatabaseName)
@@ -36,60 +58,11 @@ func newDatabaseClient(config databaseConfig, table string) (*databaseClient, er
 	}, nil
 }
 
-// GetLastTwoPositions returns the last two positions of a boat.
-func (c *databaseClient) GetLastTwoPositions(ctx context.Context, boat string, upperBound time.Time) (*LastTwoPositions, error) {
-	query := fmt.Sprintf(`
-		       SELECT longitude, latitude, measure_time
-			   FROM %s
-			   WHERE boat = $1
-			   AND measure_time <= $2
-			   ORDER BY measure_time DESC
-			   LIMIT 2;
-		       `, c.table)
-
-	ctx, cancel := context.WithTimeout(ctx, time.Second)
-	defer cancel()
-
-	rows, err := c.database.QueryContext(ctx, query, boat, upperBound)
-	if err != nil {
-		return nil, fmt.Errorf("query positions: %w", err)
-	}
-
-	var positions []Position
-	for rows.Next() {
-		var position Position
-		err = rows.Scan(
-			&position.Longitude,
-			&position.Latitude,
-			&position.Time,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("parse row: %w", err)
-		}
-		positions = append(positions, position)
-	}
-
-	var currentPosition *Position
-	if len(positions) >= 1 {
-		currentPosition = &positions[0]
-	}
-
-	var lastPosition *Position
-	if len(positions) >= 2 {
-		lastPosition = &positions[1]
-	}
-
-	return &LastTwoPositions{
-		CurrentPosition: currentPosition,
-		LastPosition:    lastPosition,
-	}, nil
-}
-
 // GetPositions returns all positions of a boat in the given time range in
 // ascending order.
 func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error) {
 	query := fmt.Sprintf(`
-		       SELECT longitude, latitude, measure_time
+		       SELECT longitude, latitude, measure_time, distance
 			   FROM %s
 			   WHERE boat = $1
 			   AND measure_time > $2
@@ -112,6 +85,7 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTim
 			&position.Longitude,
 			&position.Latitude,
 			&position.Time,
+			&position.Distance,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("parse row: %w", err)
@@ -122,28 +96,69 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTim
 	return positions, nil
 }
 
+// GetLastPosition returns the last position of a boat before or equal
+// to the upper bound time and after or equal to the lower bound time.
+func (c *databaseClient) GetLastPosition(ctx context.Context, boat string, lowerBound, upperBound time.Time) (*StoragePosition, error) {
+	query := fmt.Sprintf(`
+		       SELECT longitude, latitude, measure_time, send_time, distance, heading, velocity
+			   FROM %s
+			   WHERE boat = $1
+			   AND measure_time >= $2
+			   AND measure_time <= $3
+			   ORDER BY measure_time DESC
+			   LIMIT 1;
+		       `, c.table)
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	row := c.database.QueryRowContext(ctx, query, boat, lowerBound, upperBound)
+
+	var position StoragePosition
+	err := row.Scan(
+		&position.Longitude,
+		&position.Latitude,
+		&position.MeasureTime,
+		&position.SendTime,
+		&position.Distance,
+		&position.Heading,
+		&position.Velocity,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil // No positions found for the boat
+		}
+		return nil, fmt.Errorf("parse row: %w", err)
+	}
+
+	return &position, nil
+}
+
 // InsertPositions inserts a list of positions of a boat into the database.
-func (c *databaseClient) InsertPositions(ctx context.Context, boat string, position *DataServerReadMessageResponse) error {
-	if position == nil {
+func (c *databaseClient) InsertPositions(ctx context.Context, boat string, positions []StoragePosition) error {
+	if positions == nil {
 		return errors.New("position is set to nil")
 	}
 
 	query := fmt.Sprintf(`
-       INSERT INTO %s(boat, longitude, latitude, measure_time, send_time) VALUES ($1, $2, $3, $4, $5);
+       INSERT INTO %s(boat, longitude, latitude, measure_time, send_time, distance, heading, velocity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
        `, c.table)
 
 	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
 	defer cancel()
 
-	for i := range position.PositionsAtTime {
+	for _, position := range positions {
 		_, err := c.database.ExecContext(
 			ctx,
 			query,
 			boat,
-			position.PositionsAtTime[i].Longitude,
-			position.PositionsAtTime[i].Latitude,
-			position.PositionsAtTime[i].MeasureTime,
-			position.PositionsAtTime[i].SendTime,
+			position.Longitude,
+			position.Latitude,
+			position.MeasureTime,
+			position.SendTime,
+			position.Distance,
+			position.Heading,
+			position.Velocity,
 		)
 
 		if err != nil {
