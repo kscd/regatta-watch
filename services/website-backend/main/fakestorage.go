@@ -97,3 +97,36 @@ func (fs *fakeStorage) GetRegattaAtTime(_ context.Context, _ time.Time) (*string
 	testID := "test"
 	return &testID, nil
 }
+
+func (fs *fakeStorage) GetBuoysAtTime(_ context.Context, _ time.Time) ([]buoy, error) {
+	return []buoy{
+		{ // buoy Schwanenwik bridge
+			Latitude:                 53.565538,
+			Longitude:                10.014123 - 0.005,
+			PassAngle:                90,
+			IsPassDirectionClockwise: true,
+			ToleranceInMeters:        100,
+		},
+		{ // buoy Kennedy bridge
+			Latitude:                 53.558766 + 0.0035,
+			Longitude:                9.998720 + 0.0055,
+			PassAngle:                225,
+			IsPassDirectionClockwise: true,
+			ToleranceInMeters:        100,
+		},
+		{ // buoy Langer Zug entry
+			Latitude:                 53.576497 - 0.001,
+			Longitude:                10.004418 + 0.001,
+			PassAngle:                45,
+			IsPassDirectionClockwise: true,
+			ToleranceInMeters:        100,
+		},
+		{ // pier (placed north of the Langer Zug pointing down)
+			Latitude:                 53.577880,
+			Longitude:                10.008151,
+			PassAngle:                160,
+			IsPassDirectionClockwise: true,
+			ToleranceInMeters:        100,
+		},
+	}, nil
+}

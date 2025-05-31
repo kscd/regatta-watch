@@ -183,7 +183,7 @@ func calculateDistanceInNM(oldLatitude, oldLongitude, newLatitude, newLongitude 
 	return math.Sqrt(deltaN*deltaN + deltaW*deltaW) // nautical miles
 }
 
-func calculateIfBuoysPassed(oldPosition, newPosition *Position) ([]bool, error) {
+func calculateIfBuoysPassed(buoys []buoy, oldPosition, newPosition *Position) ([]bool, error) {
 	var isPassed []bool
 	for i := range buoys {
 		lat1, lon1 := calculateNewPosition(buoys[i].Latitude, buoys[i].Longitude, buoys[i].PassAngle+180, buoys[i].ToleranceInMeters)

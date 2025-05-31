@@ -13,6 +13,7 @@ type databaseClient struct {
 	defaultTimeout time.Duration
 	gpsTable       string
 	regattaTable   string
+	buoyTable      string
 }
 
 type databaseConfig struct {
@@ -54,6 +55,7 @@ func newDatabaseClient(config databaseConfig) (*databaseClient, error) {
 		defaultTimeout: time.Minute,
 		gpsTable:       "gps_data",
 		regattaTable:   "regattas",
+		buoyTable:      "buoys",
 	}, nil
 }
 
@@ -61,7 +63,7 @@ func newDatabaseClient(config databaseConfig) (*databaseClient, error) {
 // ascending order.
 func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error) {
 	query := fmt.Sprintf(`
-		       SELECT longitude, latitude, measure_time, distance
+		       SELECT latitude, longitude, measure_time, distance
 			   FROM %s
 			   WHERE boat_id = $1
 			   AND measure_time > $2
@@ -81,8 +83,8 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTim
 	for rows.Next() {
 		var position Position
 		err = rows.Scan(
-			&position.Longitude,
 			&position.Latitude,
+			&position.Longitude,
 			&position.Time,
 			&position.Distance,
 		)
@@ -99,7 +101,7 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTim
 // to the upper bound time and after or equal to the lower bound time.
 func (c *databaseClient) GetLastPosition(ctx context.Context, boat string, lowerBound, upperBound time.Time) (*StoragePosition, error) {
 	query := fmt.Sprintf(`
-		       SELECT longitude, latitude, measure_time, send_time, distance, heading, velocity
+		       SELECT latitude, longitude, measure_time, send_time, distance, heading, velocity
 			   FROM %s
 			   WHERE boat_id = $1
 			   AND measure_time >= $2
@@ -115,8 +117,8 @@ func (c *databaseClient) GetLastPosition(ctx context.Context, boat string, lower
 
 	var position StoragePosition
 	err := row.Scan(
-		&position.Longitude,
 		&position.Latitude,
+		&position.Longitude,
 		&position.MeasureTime,
 		&position.SendTime,
 		&position.Distance,
@@ -140,11 +142,13 @@ func (c *databaseClient) InsertPositions(ctx context.Context, positions []Storag
 	}
 
 	queryWithRegatta := fmt.Sprintf(`
-       INSERT INTO %s(regatta_id, boat_id, latitude, longitude, measure_time, send_time, distance, heading, velocity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+       INSERT INTO %s(regatta_id, boat_id, latitude, longitude, measure_time, send_time, distance, heading, velocity)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
        `, c.gpsTable)
 
 	queryWithoutRegatta := fmt.Sprintf(`
-       INSERT INTO %s(boat_id, latitude, longitude, measure_time, send_time, distance, heading, velocity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+       INSERT INTO %s(boat_id, latitude, longitude, measure_time, send_time, distance, heading, velocity)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
        `, c.gpsTable)
 
 	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
@@ -193,7 +197,8 @@ func (c *databaseClient) InsertPositions(ctx context.Context, positions []Storag
 // GetRegattaAtTime returns the ID of the regatta that is active at the given time.
 func (c *databaseClient) GetRegattaAtTime(ctx context.Context, time time.Time) (*string, error) {
 	query := fmt.Sprintf(`
-		SELECT id FROM %s
+		SELECT id
+		FROM %s
 		WHERE start_time <= $1 AND end_time >= $1
 		LIMIT 1;
 	`, c.regattaTable)
@@ -213,4 +218,42 @@ func (c *databaseClient) GetRegattaAtTime(ctx context.Context, time time.Time) (
 	}
 
 	return &regattaID, nil
+}
+
+func (c *databaseClient) GetBuoysAtTime(ctx context.Context, time time.Time) ([]buoy, error) {
+	query := fmt.Sprintf(`
+		SELECT latitude, longitude, pass_angle, is_pass_direction_clockwise
+		FROM %s
+        WHERE id = ANY($1)
+		AND start_time <= $2
+        AND (end_time >= $2 OR end_time IS NULL)
+		ORDER BY array_position($1, id);
+	`, c.buoyTable)
+
+	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
+	defer cancel()
+
+	buoyIDList := []string{"Schwanenwik bridge", "Kennedy bridge", "Langer Zug", "Pier"}
+	rows, err := c.database.QueryContext(ctx, query, buoyIDList, time)
+	if err != nil {
+		return nil, fmt.Errorf("query buoys: %w", err)
+	}
+
+	var buoys []buoy
+	for rows.Next() {
+		var buoy buoy
+		err = rows.Scan(
+			&buoy.Latitude,
+			&buoy.Longitude,
+			&buoy.PassAngle,
+			&buoy.IsPassDirectionClockwise,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("parse row: %w", err)
+		}
+		buoy.ToleranceInMeters = 100
+		buoys = append(buoys, buoy)
+	}
+
+	return buoys, nil
 }

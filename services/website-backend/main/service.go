@@ -21,37 +21,6 @@ const (
 	buoyFarOffPointDistance = 1000
 )
 
-var buoys = []buoy{
-	{ // buoy Schwanenwik bridge
-		Latitude:                 53.565538,
-		Longitude:                10.014123 - 0.005,
-		PassAngle:                90,
-		IsPassDirectionClockwise: true,
-		ToleranceInMeters:        100,
-	},
-	{ // buoy Kennedy bridge
-		Latitude:                 53.558766 + 0.0035,
-		Longitude:                9.998720 + 0.0055,
-		PassAngle:                225,
-		IsPassDirectionClockwise: true,
-		ToleranceInMeters:        100,
-	},
-	{ // buoy Langer Zug entry
-		Latitude:                 53.576497 - 0.001,
-		Longitude:                10.004418 + 0.001,
-		PassAngle:                45,
-		IsPassDirectionClockwise: true,
-		ToleranceInMeters:        100,
-	},
-	{ // pier (placed north of the Langer Zug pointing down)
-		Latitude:                 53.577880,
-		Longitude:                10.008151,
-		PassAngle:                160,
-		IsPassDirectionClockwise: true,
-		ToleranceInMeters:        100,
-	},
-}
-
 type boatState struct {
 	currentRound           int
 	currentSection         int
@@ -84,6 +53,7 @@ type storageInterface interface {
 	GetLastPosition(ctx context.Context, boat string, lowerBound, upperBound time.Time) (*StoragePosition, error)
 	GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error)
 	GetRegattaAtTime(ctx context.Context, time time.Time) (*string, error)
+	GetBuoysAtTime(ctx context.Context, time time.Time) ([]buoy, error)
 }
 
 func newRegattaService(
@@ -547,9 +517,14 @@ func (s *regattaService) updateState(boat string, positions []Position, printBuo
 }
 
 func (s *regattaService) calculateIfBuoysPassed(boat string, positionOld, positionNew *Position, printUpdate bool) {
+	buoys, err := s.storageClient.GetBuoysAtTime(context.Background(), positionNew.Time)
+	if err != nil {
+		return
+	}
+
 	timeDeltaInSeconds := positionNew.Time.Sub(positionOld.Time).Seconds()
 	if timeDeltaInSeconds > 0 {
-		passed, err := calculateIfBuoysPassed(positionOld, positionNew)
+		passed, err := calculateIfBuoysPassed(buoys, positionOld, positionNew)
 		if err != nil {
 			return
 		}
@@ -565,7 +540,7 @@ func (s *regattaService) calculateIfBuoysPassed(boat string, positionOld, positi
 			s.boatStates[boat].sectionTimes = append(s.boatStates[boat].sectionTimes, sectionTime)
 			s.boatStates[boat].lastSectionTimestamp = positionNew.Time
 
-			if s.boatStates[boat].currentSection == len(buoys)-1 {
+			if s.boatStates[boat].currentSection == 4-1 { // len(buoys) - 1
 				roundTime := positionNew.Time.Sub(s.boatStates[boat].lastRoundTimestamp).Seconds()
 				s.boatStates[boat].roundTimes = append(s.boatStates[boat].roundTimes, roundTime)
 				s.boatStates[boat].lastRoundTimestamp = positionNew.Time
