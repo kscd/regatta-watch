@@ -20,12 +20,12 @@ pnpm run dev
 
 Initialise postgres
 ```sh
-initdb -D Documents/regatta-watch/postgres
+initdb -D postgres
 ```
 
 Start new database service (starts in the background)
 ```sh
-pg_ctl -D Documents/regatta-watch/postgres -l logfile start
+pg_ctl -D postgres -l logfile start
 ```
 
 Create new postgres database
@@ -52,22 +52,6 @@ CREATE TABLE IF NOT EXISTS positions_data_server (
     receive_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 ```
-And do the same for the website backend which serves as a local copy to reduce
-the required bandwidth
-```postgresql
-CREATE TABLE IF NOT EXISTS positions_website_backend (
-    id BIGSERIAL PRIMARY KEY,
-    boat text NOT NULL DEFAULT '',
-    longitude pg_catalog.float8 NOT NULL DEFAULT 0.0,
-    latitude pg_catalog.float8 NOT NULL DEFAULT 0.0,
-    measure_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
-    send_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
-    receive_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    distance pg_catalog.float8 NOT NULL DEFAULT 0.0,
-    heading pg_catalog.float8 NOT NULL DEFAULT 0.0,
-    velocity pg_catalog.float8 NOT NULL DEFAULT 0.0
-);
-```
 
 Testing
 ```postgresql
@@ -82,36 +66,15 @@ CREATE TABLE IF NOT EXISTS positions_data_server_test (
 );
 ```
 
-```postgresql
-CREATE TABLE IF NOT EXISTS positions_website_backend_test (
-    id BIGSERIAL PRIMARY KEY,
-    boat text NOT NULL DEFAULT '',
-    longitude pg_catalog.float8 NOT NULL DEFAULT 0.0,
-    latitude pg_catalog.float8 NOT NULL DEFAULT 0.0,
-    measure_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
-    send_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
-    receive_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    distance pg_catalog.float8 NOT NULL DEFAULT 0.0,
-    heading pg_catalog.float8 NOT NULL DEFAULT 0.0,
-    velocity pg_catalog.float8 NOT NULL DEFAULT 0.0
-);
-```
-
-List the tables
-```postgresql
-\dt
-```
-
-Create a role for the services to log in with
+Create a role for the services to log in with and give it the rights it needs in the database:
 ```postgresql
 CREATE ROLE regatta WITH LOGIN PASSWORD '1234';
 GRANT CONNECT ON DATABASE regatta TO regatta;
-GRANT CREATE ON DATABASE regatta TO regatta;
-GRANT USAGE ON SCHEMA public TO regatta;
+GRANT CREATE, USAGE ON SCHEMA public TO regatta;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO regatta;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO regatta;
 ```
-and give it the rights it needs in the database.
+cd to `/jobs/initialize_database/main` and run `go run .` to create all required tables.
 
 cd to `/jobs/database_testdata/main` and run `go run .` to create test data.
 

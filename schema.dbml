@@ -1,0 +1,72 @@
+Table boats {
+  id text [primary key]
+  class text [not null]
+  yardstick pg_catalog.float8 [not null]
+}
+
+Table regattas {
+  id text [primary key]
+  start_time timestamptz [not null]
+  end_time timestamptz [not null]
+}
+
+Table buoys {
+  id text [primary key]
+  version int [primary key]
+  latitude pg_catalog.float8 [not null]
+  longitude pg_catalog.float8 [not null]
+  pass_angle pg_catalog.float8 [not null]
+  is_pass_direction_clockwise boolean [not null]
+  start_time timestamptz [not null]
+  end_time timestamptz
+}
+
+Table rounds {
+  id int [primary key]
+  regatta_id text [primary key]
+  boat_id text [primary key]
+  start_time timestamptz [not null]
+  end_time timestamptz
+}
+
+Ref: rounds.regatta_id > regattas.id [delete: restrict, update: cascade]
+Ref: rounds.boat_id > boats.id [delete: restrict, update: cascade]
+
+Table sections {
+  id int [primary key]
+  round_id int [primary key]
+  regatta_id text [primary key]
+  boat_id text [primary key]
+  buoy_id_start text [not null]
+  buoy_version_start int [not null]
+  buoy_id_end text [not null]
+  buoy_version_end int [not null]
+  start_time timestamptz [not null]
+  end_time timestamptz
+}
+
+Ref: sections.(round_id, regatta_id, boat_id) > rounds.(id, regatta_id, boat_id)
+Ref: sections.regatta_id > regattas.id [delete: restrict, update: cascade]
+Ref: sections.boat_id > boats.id [delete: restrict, update: cascade]
+Ref: sections.(buoy_id_start, buoy_version_start) > buoys.(id, version) [delete: restrict, update: cascade]
+Ref: sections.(buoy_id_end, buoy_version_end) > buoys.(id, version) [delete: restrict, update: cascade]
+
+Table gps_data {
+  id BIGSERIAL [primary key]
+  regatta_id text [not null, default: '']
+  boat_id text [not null]
+  latitude pg_catalog.float8 [not null]
+  longitude pg_catalog.float8 [not null]
+  measure_time timestamptz [not null, default: '1970-01-01 00:00:00+00']
+  send_time timestamptz [not null, default: '1970-01-01 00:00:00+00']
+  receive_time timestamptz [not null, default: 'CURRENT_TIMESTAMP']
+  distance pg_catalog.float8 [not null, default: 0]
+  heading pg_catalog.float8 [not null, default: 0]
+  velocity pg_catalog.float8 [not null, default: 0]
+}
+
+Ref: gps_data.regatta_id > regattas.id [delete: restrict, update: cascade]
+Ref: gps_data.boat_id> boats.id [delete: restrict, update: cascade]
+
+
+
