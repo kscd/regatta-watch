@@ -27,13 +27,11 @@ func main() {
 	}
 
 	mode := "normal" // "test", "normal"
-
 	var storageClient storageInterface
 	if mode == "test" {
 		storageClient = newFakeStorage()
 	} else if mode == "normal" {
-		table := "gps_data"
-		storageClient, _ = newDatabaseClient(c.DBConfig, table)
+		storageClient, _ = newDatabaseClient(c.DBConfig)
 	}
 
 	/*
@@ -102,7 +100,8 @@ func main() {
 	boatList := []string{"Bluebird"}
 
 	fmt.Println("Service started and listening")
-	if mode != "test" {
+
+	if c.GetDataFromServer {
 		regattaService.ReceiveDataTicker(boatList, dataReceiverClosed)
 	}
 	err = server.ListenAndServe()

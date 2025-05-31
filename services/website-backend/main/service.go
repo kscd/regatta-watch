@@ -80,9 +80,10 @@ type clockInterface interface {
 }
 
 type storageInterface interface {
-	GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error)
-	GetLastPosition(ctx context.Context, boat string, lowerBound, upperBound time.Time) (*StoragePosition, error)
 	InsertPositions(ctx context.Context, position []StoragePosition) error
+	GetLastPosition(ctx context.Context, boat string, lowerBound, upperBound time.Time) (*StoragePosition, error)
+	GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error)
+	GetRegattaAtTime(ctx context.Context, time time.Time) (*string, error)
 }
 
 func newRegattaService(
@@ -357,9 +358,6 @@ func (s *regattaService) ReceiveDataTicker(boatList []string, done chan struct{}
 func (s *regattaService) ReceiveData(boat string) {
 	fmt.Printf("ReceiveData called for boat %q\n", boat)
 
-	// TODO: Query regatta ID from database.
-	regattaID := "Test"
-
 	ctx := context.Background()
 
 	httpBody := &ReadMessageRequest{
@@ -432,8 +430,13 @@ func (s *regattaService) ReceiveData(boat string) {
 
 	var storagePositions []StoragePosition
 
+	regattaID, err := s.storageClient.GetRegattaAtTime(ctx, positions.PositionsAtTime[0].MeasureTime)
+	if err != nil {
+		return
+	}
+
 	storagePosition := StoragePosition{
-		RegattaID:   &regattaID,
+		RegattaID:   regattaID,
 		BoatID:      boat,
 		Latitude:    positions.PositionsAtTime[0].Latitude,
 		Longitude:   positions.PositionsAtTime[0].Longitude,
@@ -487,8 +490,13 @@ func (s *regattaService) ReceiveData(boat string) {
 			velocity = additionalDistance * 3600 / timeDeltaInSeconds // knots
 		}
 
+		regattaID, err := s.storageClient.GetRegattaAtTime(ctx, position.MeasureTime)
+		if err != nil {
+			return
+		}
+
 		storagePosition := StoragePosition{
-			RegattaID:   &regattaID,
+			RegattaID:   regattaID,
 			BoatID:      boat,
 			Latitude:    position.Latitude,
 			Longitude:   position.Longitude,

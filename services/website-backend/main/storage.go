@@ -11,7 +11,8 @@ import (
 type databaseClient struct {
 	database       *sql.DB
 	defaultTimeout time.Duration
-	table          string
+	gpsTable       string
+	regattaTable   string
 }
 
 type databaseConfig struct {
@@ -41,7 +42,7 @@ type StoragePosition struct {
 	SendTime    time.Time `json:"send_time"`
 }
 
-func newDatabaseClient(config databaseConfig, table string) (*databaseClient, error) {
+func newDatabaseClient(config databaseConfig) (*databaseClient, error) {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password='%s' dbname=%s sslmode=disable",
 		config.Host, config.Port, config.UserName, config.UserPassword, config.DatabaseName)
 	db, err := sql.Open("pgx", dsn)
@@ -51,7 +52,8 @@ func newDatabaseClient(config databaseConfig, table string) (*databaseClient, er
 	return &databaseClient{
 		database:       db,
 		defaultTimeout: time.Minute,
-		table:          table,
+		gpsTable:       "gps_data",
+		regattaTable:   "regattas",
 	}, nil
 }
 
@@ -65,7 +67,7 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTim
 			   AND measure_time > $2
 			   AND measure_time <= $3
 			   ORDER BY measure_time DESC
-		       `, c.table)
+		       `, c.gpsTable)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
@@ -104,7 +106,7 @@ func (c *databaseClient) GetLastPosition(ctx context.Context, boat string, lower
 			   AND measure_time <= $3
 			   ORDER BY measure_time DESC
 			   LIMIT 1;
-		       `, c.table)
+		       `, c.gpsTable)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
@@ -133,18 +135,17 @@ func (c *databaseClient) GetLastPosition(ctx context.Context, boat string, lower
 
 // InsertPositions inserts a list of positions of a boat into the database.
 func (c *databaseClient) InsertPositions(ctx context.Context, positions []StoragePosition) error {
-
 	if positions == nil {
 		return errors.New("position is set to nil")
 	}
 
 	queryWithRegatta := fmt.Sprintf(`
        INSERT INTO %s(regatta_id, boat_id, latitude, longitude, measure_time, send_time, distance, heading, velocity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
-       `, c.table)
+       `, c.gpsTable)
 
 	queryWithoutRegatta := fmt.Sprintf(`
        INSERT INTO %s(boat_id, latitude, longitude, measure_time, send_time, distance, heading, velocity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
-       `, c.table)
+       `, c.gpsTable)
 
 	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
 	defer cancel()
@@ -187,4 +188,29 @@ func (c *databaseClient) InsertPositions(ctx context.Context, positions []Storag
 	}
 
 	return nil
+}
+
+// GetRegattaAtTime returns the ID of the regatta that is active at the given time.
+func (c *databaseClient) GetRegattaAtTime(ctx context.Context, time time.Time) (*string, error) {
+	query := fmt.Sprintf(`
+		SELECT id FROM %s
+		WHERE start_time <= $1 AND end_time >= $1
+		LIMIT 1;
+	`, c.regattaTable)
+
+	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
+	defer cancel()
+
+	row := c.database.QueryRowContext(ctx, query, time)
+
+	var regattaID string
+	err := row.Scan(&regattaID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("scan regatta ID: %w", err)
+	}
+
+	return &regattaID, nil
 }

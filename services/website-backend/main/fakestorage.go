@@ -92,3 +92,8 @@ func (fs *fakeStorage) GetLastPosition(_ context.Context, boat string, _, _ time
 		Distance:  lastPosition.Distance,
 	}, nil
 }
+
+func (fs *fakeStorage) GetRegattaAtTime(_ context.Context, _ time.Time) (*string, error) {
+	testID := "test"
+	return &testID, nil
+}

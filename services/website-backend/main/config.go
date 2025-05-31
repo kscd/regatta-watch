@@ -10,10 +10,11 @@ import (
 )
 
 type config struct {
-	DBConfig         databaseConfig
-	DataServerURL    string
-	RegattaStartTime time.Time
-	RegattaEndTime   time.Time
+	DBConfig          databaseConfig
+	DataServerURL     string
+	RegattaStartTime  time.Time
+	RegattaEndTime    time.Time
+	GetDataFromServer bool
 }
 
 func loadConfig() (*config, error) {
@@ -74,6 +75,15 @@ func loadConfig() (*config, error) {
 		return nil, errors.New("error parsing REGATTA_END_TIME")
 	}
 
+	getDataFromServer, ok := os.LookupEnv("GET_DATA_FROM_SERVER")
+	if !ok {
+		return nil, errors.New("GET_DATA_FROM_SERVER was not defined")
+	}
+	if getDataFromServer != "true" && getDataFromServer != "false" {
+		return nil, errors.New("GET_DATA_FROM_SERVER must be 'true' or 'false'")
+	}
+	getDataFromServerBool := getDataFromServer == "true"
+
 	dbConfig := databaseConfig{
 		Host:         host,
 		Port:         port,
@@ -83,9 +93,10 @@ func loadConfig() (*config, error) {
 	}
 
 	return &config{
-		DBConfig:         dbConfig,
-		DataServerURL:    dataServerURL,
-		RegattaStartTime: regattaStartTime,
-		RegattaEndTime:   regattaEndTime,
+		DBConfig:          dbConfig,
+		DataServerURL:     dataServerURL,
+		RegattaStartTime:  regattaStartTime,
+		RegattaEndTime:    regattaEndTime,
+		GetDataFromServer: getDataFromServerBool,
 	}, nil
 }
