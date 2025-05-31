@@ -52,8 +52,8 @@ Ref: sections.(buoy_id_start, buoy_version_start) > buoys.(id, version) [delete:
 Ref: sections.(buoy_id_end, buoy_version_end) > buoys.(id, version) [delete: restrict, update: cascade]
 
 Table gps_data {
-  id BIGSERIAL [primary key]
-  regatta_id text [not null, default: '']
+  id bigserial [primary key]
+  regatta_id text
   boat_id text [not null]
   latitude pg_catalog.float8 [not null]
   longitude pg_catalog.float8 [not null]

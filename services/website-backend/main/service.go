@@ -82,7 +82,7 @@ type clockInterface interface {
 type storageInterface interface {
 	GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error)
 	GetLastPosition(ctx context.Context, boat string, lowerBound, upperBound time.Time) (*StoragePosition, error)
-	InsertPositions(ctx context.Context, boat string, position []StoragePosition) error
+	InsertPositions(ctx context.Context, position []StoragePosition) error
 }
 
 func newRegattaService(
@@ -328,7 +328,7 @@ func (s *regattaService) FetchRoundTimes(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func (s *regattaService) ReceiveDataTicker(done chan struct{}) {
+func (s *regattaService) ReceiveDataTicker(boatList []string, done chan struct{}) {
 	fmt.Println("Starting ticker")
 
 	interruptChannel := make(chan os.Signal, 1)
@@ -346,7 +346,7 @@ func (s *regattaService) ReceiveDataTicker(done chan struct{}) {
 				close(done)
 				return
 			case <-ticker.C:
-				for boat := range s.boatStates {
+				for _, boat := range boatList {
 					s.ReceiveData(boat)
 				}
 			}
@@ -356,6 +356,9 @@ func (s *regattaService) ReceiveDataTicker(done chan struct{}) {
 
 func (s *regattaService) ReceiveData(boat string) {
 	fmt.Printf("ReceiveData called for boat %q\n", boat)
+
+	// TODO: Query regatta ID from database.
+	regattaID := "Test"
 
 	ctx := context.Background()
 
@@ -430,6 +433,8 @@ func (s *regattaService) ReceiveData(boat string) {
 	var storagePositions []StoragePosition
 
 	storagePosition := StoragePosition{
+		RegattaID:   &regattaID,
+		BoatID:      boat,
 		Latitude:    positions.PositionsAtTime[0].Latitude,
 		Longitude:   positions.PositionsAtTime[0].Longitude,
 		Distance:    0,
@@ -483,6 +488,8 @@ func (s *regattaService) ReceiveData(boat string) {
 		}
 
 		storagePosition := StoragePosition{
+			RegattaID:   &regattaID,
+			BoatID:      boat,
 			Latitude:    position.Latitude,
 			Longitude:   position.Longitude,
 			Distance:    lastPosition.Distance + additionalDistance,
@@ -494,7 +501,7 @@ func (s *regattaService) ReceiveData(boat string) {
 		storagePositions = append(storagePositions, storagePosition)
 	}
 
-	err = s.storageClient.InsertPositions(ctx, boat, storagePositions)
+	err = s.storageClient.InsertPositions(ctx, storagePositions)
 	if err != nil {
 		err = fmt.Errorf("inserting positions: %w", err)
 		s.LogError(err)

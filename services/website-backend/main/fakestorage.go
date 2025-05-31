@@ -56,7 +56,7 @@ func (fs *fakeStorage) GetPositions(_ context.Context, boat string, startTime, e
 	return positions, nil
 }
 
-func (fs *fakeStorage) InsertPositions(_ context.Context, _ string, _ []StoragePosition) error {
+func (fs *fakeStorage) InsertPositions(_ context.Context, _ []StoragePosition) error {
 	return nil
 }
 

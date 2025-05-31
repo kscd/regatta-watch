@@ -26,16 +26,13 @@ func main() {
 		log.Fatal("error loading config: ", err)
 	}
 
-	mode := "test" // "fake", "test", "normal"
+	mode := "normal" // "test", "normal"
 
 	var storageClient storageInterface
-	if mode == "fake" {
+	if mode == "test" {
 		storageClient = newFakeStorage()
-	} else if mode == "test" {
-		table := "positions_website_backend_test"
-		storageClient, _ = newDatabaseClient(c.DBConfig, table)
 	} else if mode == "normal" {
-		table := "positions_website_backend"
+		table := "gps_data"
 		storageClient, _ = newDatabaseClient(c.DBConfig, table)
 	}
 
@@ -62,10 +59,6 @@ func main() {
 	// TODO: Set proper pearl chain parameters
 	pearlChainLength_ := 10
 	pearlChainStep := 1.5
-	if mode == "hackertalk" {
-		pearlChainLength_ = 30
-		pearlChainStep = 60
-	}
 	regattaService := newRegattaService(
 		storageClient,
 		c.DataServerURL,
@@ -106,9 +99,11 @@ func main() {
 		close(idleConnectionsClosed)
 	}()
 
+	boatList := []string{"Bluebird"}
+
 	fmt.Println("Service started and listening")
-	if mode != "fake" {
-		regattaService.ReceiveDataTicker(dataReceiverClosed)
+	if mode != "test" {
+		regattaService.ReceiveDataTicker(boatList, dataReceiverClosed)
 	}
 	err = server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {

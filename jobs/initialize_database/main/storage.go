@@ -190,7 +190,7 @@ func (c *DatabaseClient) CreateGPSDataTable(ctx context.Context) error {
 	query := fmt.Sprintf(`
         CREATE TABLE IF NOT EXISTS gps_data (
             id bigserial PRIMARY KEY,
-            regatta_id text NOT NULL DEFAULT '',
+            regatta_id text,
             boat_id text NOT NULL,
             latitude pg_catalog.float8 NOT NULL,
             longitude pg_catalog.float8 NOT NULL,

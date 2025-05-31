@@ -30,6 +30,8 @@ type Position struct {
 }
 
 type StoragePosition struct {
+	RegattaID   *string   `json:"regatta_id"`
+	BoatID      string    `json:"boat_id"`
 	Latitude    float64   `json:"latitude"`
 	Longitude   float64   `json:"longitude"`
 	Distance    float64   `json:"distance"`
@@ -59,7 +61,7 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTim
 	query := fmt.Sprintf(`
 		       SELECT longitude, latitude, measure_time, distance
 			   FROM %s
-			   WHERE boat = $1
+			   WHERE boat_id = $1
 			   AND measure_time > $2
 			   AND measure_time <= $3
 			   ORDER BY measure_time DESC
@@ -97,7 +99,7 @@ func (c *databaseClient) GetLastPosition(ctx context.Context, boat string, lower
 	query := fmt.Sprintf(`
 		       SELECT longitude, latitude, measure_time, send_time, distance, heading, velocity
 			   FROM %s
-			   WHERE boat = $1
+			   WHERE boat_id = $1
 			   AND measure_time >= $2
 			   AND measure_time <= $3
 			   ORDER BY measure_time DESC
@@ -130,31 +132,54 @@ func (c *databaseClient) GetLastPosition(ctx context.Context, boat string, lower
 }
 
 // InsertPositions inserts a list of positions of a boat into the database.
-func (c *databaseClient) InsertPositions(ctx context.Context, boat string, positions []StoragePosition) error {
+func (c *databaseClient) InsertPositions(ctx context.Context, positions []StoragePosition) error {
+
 	if positions == nil {
 		return errors.New("position is set to nil")
 	}
 
-	query := fmt.Sprintf(`
-       INSERT INTO %s(boat, longitude, latitude, measure_time, send_time, distance, heading, velocity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+	queryWithRegatta := fmt.Sprintf(`
+       INSERT INTO %s(regatta_id, boat_id, latitude, longitude, measure_time, send_time, distance, heading, velocity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+       `, c.table)
+
+	queryWithoutRegatta := fmt.Sprintf(`
+       INSERT INTO %s(boat_id, latitude, longitude, measure_time, send_time, distance, heading, velocity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
        `, c.table)
 
 	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
 	defer cancel()
 
+	var err error
 	for _, position := range positions {
-		_, err := c.database.ExecContext(
-			ctx,
-			query,
-			boat,
-			position.Longitude,
-			position.Latitude,
-			position.MeasureTime,
-			position.SendTime,
-			position.Distance,
-			position.Heading,
-			position.Velocity,
-		)
+
+		if position.RegattaID == nil {
+			_, err = c.database.ExecContext(
+				ctx,
+				queryWithoutRegatta,
+				position.BoatID,
+				position.Latitude,
+				position.Longitude,
+				position.MeasureTime,
+				position.SendTime,
+				position.Distance,
+				position.Heading,
+				position.Velocity,
+			)
+		} else {
+			_, err = c.database.ExecContext(
+				ctx,
+				queryWithRegatta,
+				*position.RegattaID,
+				position.BoatID,
+				position.Latitude,
+				position.Longitude,
+				position.MeasureTime,
+				position.SendTime,
+				position.Distance,
+				position.Heading,
+				position.Velocity,
+			)
+		}
 
 		if err != nil {
 			return fmt.Errorf("insert position: %w", err)
