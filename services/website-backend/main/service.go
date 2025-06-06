@@ -19,22 +19,10 @@ const (
 	buoyFarOffPointDistance = 1000
 )
 
-type boatState struct {
-	currentRound           int
-	currentSection         int
-	roundTimes             []float64 // in seconds
-	sectionTimes           []float64 // in seconds
-	lastSectionTimestamp   time.Time
-	lastRoundTimestamp     time.Time
-	lastDataPointTimestamp time.Time
-	lastPosition           *Position
-}
-
 type regattaService struct {
 	storageClient    storageInterface
 	httpClient       *http.Client
 	dataServerURL    string
-	boatStates       map[string]*boatState
 	pearlChainLength int
 	pearlChainStep   float64
 	regattaStartTime time.Time
@@ -77,7 +65,6 @@ func newRegattaService(
 		storageClient:    storageClient,
 		dataServerURL:    dataServerURL,
 		httpClient:       httpClient,
-		boatStates:       make(map[string]*boatState),
 		pearlChainLength: pearlChainLength,
 		pearlChainStep:   pearlChainStep,
 		regattaStartTime: regattaStartTime,
