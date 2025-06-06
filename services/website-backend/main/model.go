@@ -40,6 +40,8 @@ type FetchPearlChainResponse struct {
 }
 
 type buoy struct {
+	ID                       string  `json:"id"`
+	Version                  int     `json:"version"`
 	Latitude                 float64 `json:"latitude"`
 	Longitude                float64 `json:"longitude"`
 	PassAngle                float64 `json:"pass_angle"`
@@ -99,4 +101,17 @@ var roundToCrew = map[int][]string{
 	21: {"Raymund", "Heiko"},
 	22: {"Birgitt", "Liz"},
 	23: {"Kevin", "Gabriel"},
+}
+
+type Round struct {
+	ID        int        `json:"id"`
+	StartTime time.Time  `json:"start_time"`
+	EndTime   *time.Time `json:"end_time"`
+}
+
+type Section struct {
+	ID        int        `json:"id"`
+	RoundID   int        `json:"round_id"`
+	StartTime time.Time  `json:"start_time"`
+	EndTime   *time.Time `json:"end_time"`
 }
