@@ -26,13 +26,13 @@ func main() {
 		log.Fatal("error loading config: ", err)
 	}
 
-	mode := "normal" // "test", "normal"
+	//mode := "normal" // "test", "normal"
 	var storageClient storageInterface
-	if mode == "test" {
-		storageClient = newFakeStorage()
-	} else if mode == "normal" {
-		storageClient, _ = newDatabaseClient(c.DBConfig)
-	}
+	//if mode == "test" {
+	//storageClient = newFakeStorage()
+	//} else if mode == "normal" {
+	storageClient, _ = newDatabaseClient(c.DBConfig)
+	//}
 
 	/*
 		certPool := x509.NewCertPool()
@@ -65,10 +65,6 @@ func main() {
 		c.RegattaStartTime,
 		c.RegattaEndTime,
 		client)
-	err = regattaService.ReinitialiseState("Bluebird")
-	if err != nil {
-		log.Fatal(`cannot initialise state for boat "Bluebird": `, err)
-	}
 
 	/*
 		// TODO: Remove if Vivace is not measured.

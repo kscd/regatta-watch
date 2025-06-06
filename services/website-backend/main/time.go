@@ -42,6 +42,11 @@ func (c *clock) Now() time.Time {
 	return c.referenceTime.Add(adjustedElapsed)
 }
 
+// RealNow Always returns the actual real time
+func (c *clock) RealNow() time.Time {
+	return c.timeSource.Now()
+}
+
 // SetSpeed sets the time speed factor
 func (c *clock) SetSpeed(speed float64) {
 	now := c.timeSource.Now()
