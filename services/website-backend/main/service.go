@@ -411,6 +411,35 @@ func (s *regattaService) ResetClockConfiguration(w http.ResponseWriter, r *http.
 	return
 }
 
+func (s *regattaService) GetClockTime(w http.ResponseWriter, _ *http.Request) {
+	fmt.Println("GetTime called")
+
+	enableCors(&w)
+
+	currentTime := s.clock.Now()
+
+	response := GetClockTimeResponse{
+		Time: currentTime,
+	}
+
+	// Encode response to JSON
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		err = fmt.Errorf("get time: marshal response: %w", err)
+		s.LogError(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// Write response
+	if _, err = w.Write(responseBytes); err != nil {
+		err = fmt.Errorf("get time: write to http writer: %w", err)
+		s.LogError(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
 func (s *regattaService) ReceiveDataTicker(boatList []string, done chan struct{}) {
 	fmt.Println("Starting ticker")
 

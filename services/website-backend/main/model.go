@@ -120,3 +120,7 @@ type SetClockConfigurationRequest struct {
 	ClockTime  time.Time `json:"clock_time"`
 	ClockSpeed float64   `json:"clock_speed"`
 }
+
+type GetClockTimeResponse struct {
+	Time time.Time `json:"time"`
+}

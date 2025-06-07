@@ -69,6 +69,7 @@ func main() {
 	http.HandleFunc("/fetchroundtime", regattaService.FetchRoundTimes)
 	http.HandleFunc("/setclockconfiguration", regattaService.SetClockConfiguration)
 	http.HandleFunc("/resetclockconfiguration", regattaService.ResetClockConfiguration)
+	http.HandleFunc("/getclocktime", regattaService.GetClockTime)
 	server := &http.Server{Addr: ":8091"}
 
 	idleConnectionsClosed := make(chan struct{})
