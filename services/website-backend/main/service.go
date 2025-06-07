@@ -256,10 +256,10 @@ func (s *regattaService) FetchPearlChain(w http.ResponseWriter, r *http.Request)
 					Latitude:  positions[index].Latitude,
 					Longitude: positions[index].Longitude,
 					Heading: calculateHeading(
-						positions[index].Latitude,
-						positions[index].Longitude,
 						positions[index+1].Latitude,
-						positions[index+1].Longitude),
+						positions[index+1].Longitude,
+						positions[index].Latitude,
+						positions[index].Longitude),
 				})
 				nextStop = nextStop.Add(-pearlChainStep)
 			}
