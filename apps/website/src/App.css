@@ -71,12 +71,12 @@
   font-weight: 700;
   font-size: 1.25rem;
   line-height: 1.75rem;
-  padding: 0.5rem;
   // border: 1px solid #ebebeb;
   // border-radius: 0.25rem;
   text-decoration: none;
   color: #FFFFFF;
   // font-family: 'Courier New', monospace;
+  gap: 0.5rem;
 }
 
 .show-counter .countdown {

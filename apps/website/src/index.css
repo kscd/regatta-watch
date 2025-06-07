@@ -74,3 +74,17 @@ button:focus-visible {
 .bold-column-header {
   font-weight: bold;
 }
+
+.clock-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.clock-dialog-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  width: 100%;
+}
