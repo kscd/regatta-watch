@@ -115,3 +115,8 @@ type Section struct {
 	StartTime time.Time  `json:"start_time"`
 	EndTime   *time.Time `json:"end_time"`
 }
+
+type SetClockConfigurationRequest struct {
+	ClockTime  time.Time `json:"clock_time"`
+	ClockSpeed float64   `json:"clock_speed"`
+}

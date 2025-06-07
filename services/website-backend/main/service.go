@@ -33,6 +33,9 @@ type regattaService struct {
 type clockInterface interface {
 	Now() time.Time
 	RealNow() time.Time
+	SetCurrentTimeAs(fakeTime time.Time)
+	SetSpeed(speed float64)
+	Reset()
 }
 
 type storageInterface interface {
@@ -100,7 +103,12 @@ func (s *regattaService) FetchPosition(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
+	// reset clock if we move into the future
 	now := s.clock.Now()
+	realNow := s.clock.RealNow()
+	if now.After(realNow) {
+		s.clock.Reset()
+	}
 
 	// parse data from request
 	var m FetchPositionRequest
@@ -327,7 +335,7 @@ func (s *regattaService) FetchRoundTimes(w http.ResponseWriter, r *http.Request)
 		}
 
 		for _, round := range rounds {
-			if round.EndTime == nil {
+			if round.EndTime == nil || now.Sub(*round.EndTime) < 0 {
 				roundTimeCurrent = append(roundTimeCurrent, now.Sub(round.StartTime).Seconds())
 			} else {
 				roundTimeCurrent = append(roundTimeCurrent, round.EndTime.Sub(round.StartTime).Seconds())
@@ -335,7 +343,7 @@ func (s *regattaService) FetchRoundTimes(w http.ResponseWriter, r *http.Request)
 		}
 
 		for _, section := range sections {
-			if section.EndTime == nil {
+			if section.EndTime == nil || now.Sub(*section.EndTime) < 0 {
 				sectionTimeCurrent = append(sectionTimeCurrent, now.Sub(section.StartTime).Seconds())
 			} else {
 				sectionTimeCurrent = append(sectionTimeCurrent, section.EndTime.Sub(section.StartTime).Seconds())
@@ -364,6 +372,33 @@ func (s *regattaService) FetchRoundTimes(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+}
+
+func (s *regattaService) SetClockConfiguration(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("SetClockConfiguration called")
+
+	enableCors(&w)
+
+	// parse data from request
+	var c SetClockConfigurationRequest
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		err = fmt.Errorf("set clock configuration: read http body: %w", err)
+		s.LogError(err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	if err = json.Unmarshal(body, &c); err != nil {
+		err = fmt.Errorf("set clock configuration: unmarshal http body: %w", err)
+		s.LogError(err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	s.clock.SetCurrentTimeAs(c.ClockTime)
+	s.clock.SetSpeed(c.ClockSpeed)
+
+	return
 }
 
 func (s *regattaService) ReceiveDataTicker(boatList []string, done chan struct{}) {
