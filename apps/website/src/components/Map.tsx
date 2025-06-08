@@ -1,157 +1,53 @@
-import React, { useRef, useEffect } from 'react';
-import alsterImg from '../assets/alster.png'
-import {PearlChain} from "../services/boatService.tsx";
+import React from "react";
+import L from 'leaflet';
+import {Circle, MapContainer, Polyline, TileLayer} from "react-leaflet";
+import {PearlChain, Position} from "../services/boatService.tsx";
 
-type Position = {latitude: number, longitude: number, heading: number};
+type MapProps = { boatPosition: Position, pearlChain: PearlChain};
 
-type MapProps = {positionN: number; positionW: number; heading: number; pearlChain: PearlChain};
+export const Map: React.FC<MapProps> = ({boatPosition, pearlChain}) => {
+    const initialZoom = 15;
 
-export const Map: React.FC<MapProps> = ({ positionN, positionW, heading, pearlChain}) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+    const bounds: L.LatLngBoundsExpression = [
+        [53.5677 - 0.015, 10.006 - 0.015],
+        [53.5677 + 0.015, 10.006 + 0.015]
+    ];
 
-  const buoy1 = {latitude: 53.565538, longitude: 10.014123-0.005}
-  const buoy2 = {latitude: 53.558766+0.0035, longitude: 9.998720+0.0055}
-  const buoy3 = {latitude: 53.576497-0.001, longitude: 10.004418+0.001}
+    const buoy1: L.LatLngExpression = [53.565538, 10.009123]
+    const buoy2: L.LatLngExpression = [53.562266, 10.00422]
+    const buoy3: L.LatLngExpression = [53.575497, 10.005418]
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
+    const position: L.LatLngExpression = [boatPosition.latitude, boatPosition.longitude];
 
-    if (!canvas) {
-      console.error("Canvas element not found");
-      return;
+    const polyline: L.LatLngExpression[] = [[boatPosition.latitude, boatPosition.longitude]];
+    for (const position of pearlChain.positions) {
+        polyline.push([position.latitude, position.longitude]);
     }
 
-    const context = canvas.getContext('2d');
-
-    if (!context) {
-      console.error("2D context not supported");
-      return;
-    }
-
-    const drawBackgroundImage = () => {
-        const backgroundImage = new Image();
-        backgroundImage.src = alsterImg;
-        backgroundImage.onload = () => {
-          canvas.width = backgroundImage.width;
-          canvas.height = backgroundImage.height;
-          context.drawImage(backgroundImage, 0, 0);
-          drawBuoys(buoy1);
-          drawBuoys(buoy2);
-          drawBuoys(buoy3);
-          drawPearlChain(pearlChain.positions);
-          drawPosition(positionN, positionW, heading);
-        };       
-      };
-
-    drawBackgroundImage(); // Call the function to draw the background image
-
-    const drawBuoys = (buoy: {latitude: number, longitude: number}) => {
-        context.beginPath();
-        context.arc(calcPixelFromLongitude(buoy.longitude), calcPixelFromLatitude(buoy.latitude), 10, 0, 2 * Math.PI);
-        context.fillStyle = 'yellow';
-        context.fill();
-    }
-
-
-    const drawPosition = (positionN: number, positionW: number, heading: number) => {
-      const headingInRadians = heading / 180 * Math.PI
-      
-      context.beginPath();
-      context.arc(calcPixelFromLongitude(positionW), calcPixelFromLatitude(positionN), 10, 0.5 * Math.PI + headingInRadians, 0.5 * Math.PI + headingInRadians + 2 * Math.PI / 2);
-      context.fillStyle = 'red';
-      context.fill();
-
-      context.beginPath();
-      context.arc(calcPixelFromLongitude(positionW), calcPixelFromLatitude(positionN), 10, 1.5 * Math.PI + headingInRadians, 1.5 * Math.PI + headingInRadians + 2 * Math.PI / 2);
-      context.fillStyle = 'green';
-      context.fill();
-    }
-
-    const drawPearlChain = (pearlChain: Position[]) => {
-      for (let i = 0; i < pearlChain.length; i++) {
-        const headingInRadians = pearlChain[i].heading / 180 * Math.PI
-
-        context.beginPath();
-        context.arc(calcPixelFromLongitude(pearlChain[i].longitude), calcPixelFromLatitude(pearlChain[i].latitude), 5, 0.5 * Math.PI + headingInRadians, 0.5 * Math.PI + headingInRadians + 2 * Math.PI / 2);
-        context.fillStyle = 'red';
-        context.fill();
-
-        context.beginPath();
-        context.arc(calcPixelFromLongitude(pearlChain[i].longitude), calcPixelFromLatitude(pearlChain[i].latitude), 5, 1.5 * Math.PI + headingInRadians, 1.5 * Math.PI + headingInRadians + 2 * Math.PI / 2);
-        context.fillStyle = 'green';
-        context.fill();
-      }
-    }
-
-    const draw = (event: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-
-      context.beginPath();
-      context.arc(x, y, 10, 0, 2 * Math.PI);
-      context.fillStyle = 'green';
-      context.fill();
-      context.fillStyle = 'red';
-      context.fillText(x.toString(),x,y+10)
-      context.fillText(y.toString(),x,y+20)
-    };
-
-    canvas.addEventListener('mousedown', draw);
-
-    return () => {
-      canvas.removeEventListener('mousedown', draw);
-    };
-  }, [positionN, positionW]);
-
-  return <canvas ref={canvasRef} />;
-};
-
-const calcPixelFromLatitude = (latitude :number) => {
-    const pixelA = 1024.8;
-    const latitudeA = 53.557778;
-
-    const pixelB = 41;
-    const latitudeB = 53.577417;
-
-    const latitudeDelta = latitudeB - latitudeA;
-    const pixelDelta = pixelB - pixelA;
-
-    return (latitude - latitudeA)/latitudeDelta*pixelDelta + pixelA
+    return (
+        <MapContainer
+            center={[53.5677, 10.006]}
+            zoom={initialZoom}
+            style={{height: '100%', width: '100%'}}
+            minZoom={initialZoom}
+            maxZoom={18}
+            maxBounds={bounds}
+            maxBoundsViscosity={1.0}
+        >
+            <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Circle center={buoy1} radius={10} pathOptions={{color: 'red', fillColor: 'orange', fillOpacity: 1}}/>
+            <Circle center={buoy2} radius={10} pathOptions={{color: 'red', fillColor: 'orange', fillOpacity: 1}}/>
+            <Circle center={buoy3} radius={10} pathOptions={{color: 'red', fillColor: 'orange', fillOpacity: 1}}/>
+            <Polyline positions={polyline} pathOptions={{color: 'blue', opacity: 0.25}}/>
+            <Circle center={position} radius={20} pathOptions={{color: 'blue', fillColor: 'blue', fillOpacity: 1}}/>
+            {
+                pearlChain.positions.map((position, index) => (
+                    <Circle key={index} center={[position.latitude, position.longitude]} radius={7.5} pathOptions={{color: 'blue', fillColor: 'blue', fillOpacity: 0.5}}/>
+                ))
+            }
+        </MapContainer>
+    )
 }
-
-const calcPixelFromLongitude = (longitude :number) => {
-    const pixelA = 73;
-    const longitudeA = 9.997917;
-
-    const pixelB = 435.2;
-    const longitudeB = 10.010083;
-
-    const longitudeDelta = longitudeB - longitudeA;
-    const pixelDelta = pixelB - pixelA;
-
-    return (longitude - longitudeA)/longitudeDelta*pixelDelta + pixelA
-}
-
-/*
-Kennedy bridge: exact middle:
-
-53°33'28.0"N 9°59'52.5"E
-53.557778, 9.997917
-
-73,1024.8
-
-Langenzug bridge
-53°34'38.7"N 10°00'36.3"E
-53.577417, 10.010083
-
-435.2, 41
-
-Google maps picture: 650x1055, 1.623
-
-1130x1828, 1.618
-1280x1828, 1.428
-1496x1828, 1.222
-
-New Pictures:
-*/
