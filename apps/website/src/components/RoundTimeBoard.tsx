@@ -22,12 +22,12 @@ export const RoundTimeBoard: React.FC<RoundTimeBoardProps> = ({ roundTimes, sect
     const sectionTimeRows = chunkArray(sectionTimesArray, 4);
 
     const columns: GridColDef[] = [
-        { field: 'round', headerName: '', width: 70, cellClassName: 'bold-column-cell', resizable: false },
-        { field: 'sectionTime1', headerName: 'Section 1', width: 110, resizable: false },
-        { field: 'sectionTime2', headerName: 'Section 2', width: 110, resizable: false },
-        { field: 'sectionTime3', headerName: 'Section 3', width: 110, resizable: false },
-        { field: 'sectionTime4', headerName: 'Section 4', width: 110, resizable: false },
-        { field: 'roundTime', headerName: 'Round Time', width: 130, cellClassName: 'bold-column-cell', resizable: false },
+        { field: 'round', headerName: 'Round', width: 70, cellClassName: 'bold-column-cell', resizable: false },
+        { field: 'sectionTime1', headerName: 'Sec 1', width: 90, resizable: false, align: 'right', headerAlign: 'right' },
+        { field: 'sectionTime2', headerName: 'Sec 2', width: 90, resizable: false, align: 'right', headerAlign: 'right' },
+        { field: 'sectionTime3', headerName: 'Sec 3', width: 90, resizable: false, align: 'right', headerAlign: 'right' },
+        { field: 'sectionTime4', headerName: 'Sec 4', width: 90, resizable: false, align: 'right', headerAlign: 'right' },
+        { field: 'roundTime', headerName: 'Time', width: 100, cellClassName: 'bold-column-cell', resizable: false, align: 'right', headerAlign: 'right' },
     ];
 
     const rows = roundTimesArray.map((roundTime, roundIndex) => {
@@ -41,13 +41,12 @@ export const RoundTimeBoard: React.FC<RoundTimeBoardProps> = ({ roundTimes, sect
     const paginationModel = { page: 0, pageSize: 5 };
 
     return (
-        <div className="table-container">
+        <div className="datagrid-container">
              <DataGrid
-                rows={rows}
+                rows={rows.reverse()}
                 columns={columns}
                 initialState={{ pagination: { paginationModel } }}
-                pageSizeOptions={[5, 10, 50]}
-                sx={{ border: 0, fontSize: 20 }}
+                sx={{ border: 0, fontSize: 16, fontFamily: 'monospace' }}
             />
         </div>
     );

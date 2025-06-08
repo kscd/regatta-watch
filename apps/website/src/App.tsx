@@ -14,7 +14,8 @@ import {Map} from "./components/Map.tsx";
 function App() {
     const [isClockDialogOpen, setIsClockDialogOpen] = React.useState(false);
 
-    const regattaStartDate = new Date(1722682800000).getTime(); // Sat Aug 03 2024 13:00:00 GMT+0200 (Central European Summer Time)
+    //const regattaStartDate = new Date(1722682800000).getTime(); // Sat Aug 03 2024 13:00:00 GMT+0200 (Central European Summer Time)
+    const regattaStartDate = new Date(1754132400000).getTime(); // Sat Aug 02 2025 13:00:00 GMT+0200 (Central European Summer Time)
 
     const {position, pearlChain, roundTime} = useDataBase();
 
@@ -37,21 +38,50 @@ function App() {
     return (
         <>
             <div className={"page-container"}>
-                <div className="map-container">
+                <div className={"header-container"}>
                     <div className={"clock-container"}>
                         {clockTime}
                         <Button variant="contained" onClick={handleOpenClockDialog}>Configure clock</Button>
                     </div>
-                    <Map boatPosition={boatPosition} pearlChain={pearlChain} />
+                    <h1>24h Regatta 2025</h1>
+                    <div className={"countdown-container"}>
+                        <CountdownTimer targetDate={regattaStartDate}/>
+                    </div>
                 </div>
-                <div className={"boat-container"}>
-                    <h2 className="boat-name">PSC Bluebird (Conger)</h2>
-                    <Infoboard positionN={position.latitude} positionW={position.longitude} heading={position.heading}
-                        velocity={position.velocity} distance={position.distance} round={position.round}
-                        section={position.section} crew0={position.crew0} crew1={position.crew1}
-                        nextCrew0={position.next_crew0} nextCrew1={position.next_crew1}/>
-                    <CountdownTimer targetDate={regattaStartDate}/>
-                    <RoundTimeBoard roundTimes={roundTime.round_times} sectionTimes={roundTime.section_times}></RoundTimeBoard>
+                <div className={"regatta-container"}>
+                    <div className={"boat-container"}>
+                        <h2 className="boat-name">PSC Vivace (Kielzugvogel)</h2>
+                        <Infoboard
+                            latitude={position.latitude}
+                            longitude={position.longitude}
+                            heading={position.heading}
+                            velocity={position.velocity}
+                            distance={position.distance}
+                            crew0={position.crew0}
+                            crew1={position.crew1}
+                            nextCrew0={position.next_crew0}
+                            nextCrew1={position.next_crew1}
+                        />
+                        <RoundTimeBoard roundTimes={roundTime.round_times} sectionTimes={roundTime.section_times}></RoundTimeBoard>
+                    </div>
+                    <div className="map-container">
+                        <Map boatPosition={boatPosition} pearlChain={pearlChain} />
+                    </div>
+                    <div className={"boat-container"}>
+                        <h2 className="boat-name">PSC Bluebird (Conger)</h2>
+                        <Infoboard
+                            latitude={position.latitude}
+                            longitude={position.longitude}
+                            heading={position.heading}
+                            velocity={position.velocity}
+                            distance={position.distance}
+                            crew0={position.crew0}
+                            crew1={position.crew1}
+                            nextCrew0={position.next_crew0}
+                            nextCrew1={position.next_crew1}
+                        />
+                        <RoundTimeBoard roundTimes={roundTime.round_times} sectionTimes={roundTime.section_times}></RoundTimeBoard>
+                    </div>
                 </div>
             </div>
             <ClockDialog open={isClockDialogOpen} handleClose={handleCloseClockDialog} />

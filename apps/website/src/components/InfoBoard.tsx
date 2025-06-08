@@ -1,41 +1,65 @@
-type InfoboardProps = { positionN: number; positionW: number; heading: number, velocity: number, distance: number, round: number, section: number, crew0: string, crew1: string, nextCrew0: string, nextCrew1: string};
+import {Gauge, gaugeClasses} from '@mui/x-charts/Gauge';
 
-export const Infoboard: React.FC<InfoboardProps> = ({ positionN, positionW, heading, velocity, distance, round, section,crew0,crew1,nextCrew0,nextCrew1}) => (
-    <div className="show-counter">
-    <table style={{width: "100%"}} color="#FFFFFF">
-      <tbody>
-      <tr>
-        <td>position</td>
-        <td>{calcLatitudeFromNumber(positionN)}, {calcLongitudeFromNumber(positionW)}</td>
-      </tr>
-      <tr>
-        <td>heading</td>
-        <td>{calcHeadingFromNumber(heading)}</td>
-      </tr>
-      <tr>
-        <td>velocity</td>
-        <td>{velocityFormat.format(velocity)} kn, {velocityFormat.format(velocity * 1.852)} km/h</td>
-      </tr>
-      <tr>
-        <td>distance</td>
-        <td>{distanceFormat.format(distance)} NM, {distanceFormat.format(distance * 1.852)} km</td>
-      </tr>
-      <tr>
-        <td>round</td>
-        <td>{round}, section {section}</td>
-      </tr>
-      <tr>
-        <td>crew</td>
-        <td>{crew0}, {crew1}</td>
-      </tr>
-      <tr>
-        <td>next crew</td>
-        <td>{nextCrew0}, {nextCrew1}</td>
-      </tr>
-      </tbody>
-    </table>
-    </div>
-);
+type InfoboardProps = { latitude: number; longitude: number; heading: number, velocity: number, distance: number, crew0: string, crew1: string, nextCrew0: string, nextCrew1: string};
+
+export const Infoboard: React.FC<InfoboardProps> = ({ latitude, longitude, heading, velocity, distance, crew0,crew1,nextCrew0,nextCrew1}) => {
+  const maxVelocity = 10;
+  const velocityGaugeAngle = 90;
+  const heading_ = calcHeadingFromNumber(heading);
+
+  const headingWidth = 20;
+
+  const displayCrew = crew0 !== "?"
+  const displayNextCrew = nextCrew0 !== "?"
+
+  return(
+      <div className="infoboard">
+        <div className="infoboard-details">
+        {calcLatitudeFromNumber(latitude)}, {calcLongitudeFromNumber(longitude)}
+        <br/>
+        {distanceFormat.format(distance)} NM, {distanceFormat.format(distance * 1.852)} km
+        <br/>
+        {displayCrew && <>{crew0}, {crew1}</>}
+        </div>
+        <div className={"infoboard-gauges"}>
+        <Gauge
+            width={150} height={100}
+            value={velocity/100 > maxVelocity ? maxVelocity : velocity/100}
+            valueMax={maxVelocity}
+            startAngle={-velocityGaugeAngle}
+            endAngle={velocityGaugeAngle}
+            cornerRadius="50%"
+            sx={{
+              [`& .${gaugeClasses.valueText}`]: {
+                fontSize: 16,
+                transform: 'translate(0px, -20px)',
+              },
+            }}
+            text={`${velocityFormat.format(velocity/100)}kn\n${velocityFormat.format(velocity*1.852/100)}km/h`}
+        />
+        <Gauge
+            width={100}
+            height={100}
+            value={headingWidth}
+            valueMax={360}
+            startAngle={heading_-headingWidth/2}
+            endAngle={360+heading_-headingWidth/2}
+            cornerRadius="50%"
+            innerRadius="70%"
+            sx={{
+                [`& .${gaugeClasses.valueText}`]: {
+                    fontSize: 16,
+                },
+            }}
+            text={`${heading_}°`}
+        />
+        </div>
+        <div className={"infoboard-next"}>
+          {displayNextCrew && <>next: {nextCrew0}, {nextCrew1}</>}
+        </div>
+      </div>
+  );
+}
 
 const calcLatitudeFromNumber = (a: number) => {
   a = a > 90 ? 90 : a
@@ -58,9 +82,7 @@ const calcLongitudeFromNumber = (a: number) => {
 
 const calcHeadingFromNumber = (a: number) => {
   a = ((a % 360) + 360) % 360 // positive-only modulo
-
-  const degree = Math.trunc(a)
-  return `${degree}°`
+  return Math.trunc(a)
 };
 
 const minuteFormat = new Intl.NumberFormat("en-US", {
