@@ -1,4 +1,3 @@
-import './App.css'
 import { Infoboard } from './components/InfoBoard.tsx'
 import { RoundTimeBoard } from './components/RoundTimeBoard.tsx'
 import { Map } from './components/Map.tsx'
@@ -9,6 +8,9 @@ import {Button} from "@mui/material";
 import React from "react";
 import {ClockDialog} from "./components/clockDialog.tsx";
 import {useClockTime} from "./hooks/useClockTime.tsx";
+import 'leaflet/dist/leaflet.css';
+import './App.css'
+import {Map2} from "./components/Map2.tsx";
 
 function App() {
     const [isClockDialogOpen, setIsClockDialogOpen] = React.useState(false);
@@ -30,6 +32,9 @@ function App() {
     return (
         <>
             <div className={"page-container"}>
+                <div className="map-container2">
+                    <Map2 />
+                </div>
                 <div className={"map-container"}>
                     <Map positionN={position.latitude} positionW={position.longitude} heading={position.heading} pearlChain={pearlChain} />
                 </div>

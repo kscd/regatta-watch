@@ -123,3 +123,8 @@
   white-space: nowrap;
   font-weight: 400;
 }
+
+.map-container2 {
+  width: 30vw;
+  height: 90vh;
+}
