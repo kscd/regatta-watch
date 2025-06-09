@@ -22,12 +22,12 @@ export const RoundTimeBoard: React.FC<RoundTimeBoardProps> = ({ roundTimes, sect
     const sectionTimeRows = chunkArray(sectionTimesArray, 4);
 
     const columns: GridColDef[] = [
-        { field: 'round', headerName: 'Round', width: 70, cellClassName: 'bold-column-cell', resizable: false },
-        { field: 'sectionTime1', headerName: 'Sec 1', width: 90, resizable: false, align: 'right', headerAlign: 'right' },
-        { field: 'sectionTime2', headerName: 'Sec 2', width: 90, resizable: false, align: 'right', headerAlign: 'right' },
-        { field: 'sectionTime3', headerName: 'Sec 3', width: 90, resizable: false, align: 'right', headerAlign: 'right' },
-        { field: 'sectionTime4', headerName: 'Sec 4', width: 90, resizable: false, align: 'right', headerAlign: 'right' },
-        { field: 'roundTime', headerName: 'Time', width: 100, cellClassName: 'bold-column-cell', resizable: false, align: 'right', headerAlign: 'right' },
+        { field: 'round', headerName: 'Round', width: 70, cellClassName: 'bold-column-cell'},
+        { field: 'sectionTime1', headerName: 'Sec 1', width: 90, align: 'right', headerAlign: 'right' },
+        { field: 'sectionTime2', headerName: 'Sec 2', width: 90, align: 'right', headerAlign: 'right' },
+        { field: 'sectionTime3', headerName: 'Sec 3', width: 90, align: 'right', headerAlign: 'right' },
+        { field: 'sectionTime4', headerName: 'Sec 4', width: 90, align: 'right', headerAlign: 'right' },
+        { field: 'roundTime', headerName: 'Time', width: 100, cellClassName: 'bold-column-cell', align: 'right', headerAlign: 'right' },
     ];
 
     const rows = roundTimesArray.map((roundTime, roundIndex) => {
@@ -38,14 +38,22 @@ export const RoundTimeBoard: React.FC<RoundTimeBoardProps> = ({ roundTimes, sect
         return row;
     });
 
-    const paginationModel = { page: 0, pageSize: 5 };
+    //const paginationModel = { page: 0, pageSize: 8 };
+    //initialState={{ pagination: { paginationModel } }}
 
     return (
         <div className="datagrid-container">
              <DataGrid
                 rows={rows.reverse()}
                 columns={columns}
-                initialState={{ pagination: { paginationModel } }}
+                density={"compact"}
+                disableColumnSelector = {true}
+                disableColumnResize={true}
+                disableColumnFilter={true}
+                hideFooterSelectedRowCount={true}
+                isRowSelectable={() => false}
+                rowSelection={false}
+                hideFooter={true}
                 sx={{ border: 0, fontSize: 16, fontFamily: 'monospace' }}
             />
         </div>

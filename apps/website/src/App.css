@@ -54,6 +54,7 @@
 
 .datagrid-container {
   padding: 1rem;
+  height: 45vh;
 }
 
 .clock-container {
