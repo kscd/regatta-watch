@@ -22,8 +22,11 @@ export const Map: React.FC<MapProps> = ({boatPositions, pearlChains}) => {
     for (const [index, position] of boatPositions.entries()) {
         positions.push([position.latitude, position.longitude]);
         polyLines.push([[position.latitude, position.longitude]]);
-        for (const position of pearlChains[index].positions) {
-            polyLines[index].push([position.latitude, position.longitude]);
+
+        if (pearlChains[index].positions && Array.isArray(pearlChains[index].positions)) {
+            for (const position of pearlChains[index].positions) {
+                polyLines[index].push([position.latitude, position.longitude]);
+            }
         }
     }
 
@@ -73,9 +76,9 @@ export const Map: React.FC<MapProps> = ({boatPositions, pearlChains}) => {
                 ))
             }
             {
-                pearlChains.map((pearlChain, index) => (
-                    pearlChain.positions.map((position) => (
-                        <Circle key={index} center={[position.latitude, position.longitude]} radius={7.5} pathOptions={pathOptionsPearlChainList[index]}/>
+                polyLines.map((polyLine, index) => (
+                    polyLine.map((position, index2) => (
+                        <Circle key={`${index}.${index2}`} center={position} radius={7.5} pathOptions={pathOptionsPearlChainList[index]}/>
                     ))
                 ))
             }

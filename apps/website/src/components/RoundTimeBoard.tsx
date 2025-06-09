@@ -38,9 +38,6 @@ export const RoundTimeBoard: React.FC<RoundTimeBoardProps> = ({ roundTimes, sect
         return row;
     });
 
-    //const paginationModel = { page: 0, pageSize: 8 };
-    //initialState={{ pagination: { paginationModel } }}
-
     return (
         <div className="datagrid-container">
              <DataGrid

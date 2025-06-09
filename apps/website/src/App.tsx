@@ -18,7 +18,7 @@ function App() {
     //const regattaStartDate = new Date(1722682800000).getTime(); // Sat Aug 03 2024 13:00:00 GMT+0200 (Central European Summer Time)
     const regattaStartDate = new Date(1754132400000).getTime(); // Sat Aug 02 2025 13:00:00 GMT+0200 (Central European Summer Time)
 
-    const {position1, pearlChain1, roundTime1,position2, pearlChain2, roundTime2} = useDataBase("Bluebird", "Vivace");
+    const {position1, pearlChain1, roundTime1, position2, pearlChain2, roundTime2} = useDataBase("Bluebird", "Vivace");
     const clockTime = useClockTime();
 
     const handleOpenClockDialog = () => {
@@ -61,7 +61,7 @@ function App() {
                         <RoundTimeBoard roundTimes={roundTime2.round_times} sectionTimes={roundTime2.section_times}></RoundTimeBoard>
                     </div>
                     <div className="map-container">
-                        <Map boatPositions={[boatPosition1,boatPosition2]} pearlChains={[pearlChain1, pearlChain2]} />
+                        <Map boatPositions={[boatPosition1, boatPosition2]} pearlChains={[pearlChain1, pearlChain2]} />
                     </div>
                     <div className={"boat-container"}>
                         <h2 className="boat-name">PSC Bluebird (Conger)</h2>
