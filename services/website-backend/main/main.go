@@ -51,14 +51,9 @@ func main() {
 		Timeout: 5 * time.Second,
 	}
 
-	// TODO: Set proper pearl chain parameters
-	pearlChainLength_ := 10
-	pearlChainStep := 1.5
 	regattaService := newRegattaService(
 		storageClient,
 		c.DataServerURL,
-		pearlChainLength_,
-		pearlChainStep,
 		c.RegattaStartTime,
 		c.RegattaEndTime,
 		client)

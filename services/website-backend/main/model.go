@@ -23,10 +23,9 @@ type FetchPositionResponse struct {
 }
 
 type FetchPearlChainRequest struct {
-	Boat        string    `json:"boat"`
-	NoLaterThan time.Time `json:"no_later_than"`
-	Duration    int       `json:"duration"` // in seconds
-	Step        int       `json:"step"`     // in seconds
+	Boat     string `json:"boat"`
+	Length   int    `json:"length"`
+	Duration int    `json:"duration"`
 }
 
 type position struct {

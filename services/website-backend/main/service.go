@@ -23,8 +23,6 @@ type regattaService struct {
 	storageClient    storageInterface
 	httpClient       *http.Client
 	dataServerURL    string
-	pearlChainLength int
-	pearlChainStep   float64
 	regattaStartTime time.Time
 	regattaEndTime   time.Time
 	clock            clockInterface
@@ -59,8 +57,6 @@ type storageInterface interface {
 func newRegattaService(
 	storageClient storageInterface,
 	dataServerURL string,
-	pearlChainLength int,
-	pearlChainStep float64,
 	regattaStartTime time.Time,
 	regattaEndTime time.Time,
 	httpClient *http.Client) *regattaService {
@@ -68,8 +64,6 @@ func newRegattaService(
 		storageClient:    storageClient,
 		dataServerURL:    dataServerURL,
 		httpClient:       httpClient,
-		pearlChainLength: pearlChainLength,
-		pearlChainStep:   pearlChainStep,
 		regattaStartTime: regattaStartTime,
 		regattaEndTime:   regattaEndTime,
 		clock:            newClock(),
@@ -223,9 +217,11 @@ func (s *regattaService) FetchPearlChain(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Example, last 20 seconds and 10 positions
-	pearlChainLength := 5
-	pearlChainTime := 20 * time.Second
+	if m.Duration <= 0 || m.Length <= 0 {
+		return
+	}
+
+	pearlChainTime := time.Duration(m.Duration) * time.Second // time.Duration is needed for type matching
 
 	endTime := s.clock.Now()
 	startTime := endTime.Add(-pearlChainTime)
@@ -245,8 +241,8 @@ func (s *regattaService) FetchPearlChain(w http.ResponseWriter, r *http.Request)
 
 		// Calculate the time step for the pearl chain from database data
 		dbEndTime := positions[0].Time
-		dbStartTime := positions[len(positions)-2].Time                                // need an offset of 1 for heading calculation
-		pearlChainStep := dbEndTime.Sub(dbStartTime) / time.Duration(pearlChainLength) // time.Duration is needed for type matching
+		dbStartTime := positions[len(positions)-2].Time                        // need an offset of 1 for heading calculation
+		pearlChainStep := dbEndTime.Sub(dbStartTime) / time.Duration(m.Length) // time.Duration is needed for type matching
 		nextStop := endTime.Add(-pearlChainStep)
 
 		var pearlChain []position
@@ -564,8 +560,6 @@ func (s *regattaService) ReceiveData(boat string) {
 		s.LogError(err)
 		return
 	}
-
-	//s.updateState(boat, PositionAtTimeToPosition(positions.PositionsAtTime), true)
 }
 
 func (s *regattaService) insertPositions(ctx context.Context, lastPosition *StoragePosition, boat string, positions *DataServerReadMessageResponse) error {
