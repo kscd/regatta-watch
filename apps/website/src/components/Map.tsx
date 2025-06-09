@@ -18,33 +18,32 @@ export const Map: React.FC<MapProps> = ({boatPositions, pearlChains}) => {
     const buoy3: L.LatLngExpression = [53.575497, 10.005418]
 
     const positions: L.LatLngExpression[] = [];
-    const polylines: L.LatLngExpression[][] = [];
+    const polyLines: L.LatLngExpression[][] = [];
     for (const [index, position] of boatPositions.entries()) {
         positions.push([position.latitude, position.longitude]);
-        polylines.push([[position.latitude, position.longitude]]);
+        polyLines.push([[position.latitude, position.longitude]]);
         for (const position of pearlChains[index].positions) {
-            polylines[index].push([position.latitude, position.longitude]);
+            polyLines[index].push([position.latitude, position.longitude]);
         }
     }
 
     const pathOptionsBoatList = [{
-        color: 'blue',
-        fillColor: 'blue',
-        fillOpacity: 1,
+        color: 'blue', fillColor: 'blue', fillOpacity: 1,
     },{
-        color: 'grey',
-        fillColor: 'grey',
-        fillOpacity: 1,
+        color: 'grey', fillColor: 'grey', fillOpacity: 1,
     }];
 
     const pathOptionsPearlChainPolylineList = [{
-        color: 'blue',
-        opacity: 0.25
+        color: 'blue', opacity: 0.25
     },{
-        color: 'grey',
-        opacity: 0.25
+        color: 'grey', opacity: 0.25
     }];
 
+    const pathOptionsPearlChainList = [{
+        color: 'blue', fillColor: 'blue', fillOpacity: 1
+    },{
+        color: 'grey', fillColor: 'grey', fillOpacity: 1
+    }];
 
     return (
         <MapContainer
@@ -64,7 +63,7 @@ export const Map: React.FC<MapProps> = ({boatPositions, pearlChains}) => {
             <Circle center={buoy2} radius={10} pathOptions={{color: 'red', fillColor: 'orange', fillOpacity: 1}}/>
             <Circle center={buoy3} radius={10} pathOptions={{color: 'red', fillColor: 'orange', fillOpacity: 1}}/>
             {
-                polylines.map((polyline, index) => (
+                polyLines.map((polyline, index) => (
                     <Polyline key={index} positions={polyline} pathOptions={pathOptionsPearlChainPolylineList[index]} />
                 ))
             }
@@ -74,8 +73,10 @@ export const Map: React.FC<MapProps> = ({boatPositions, pearlChains}) => {
                 ))
             }
             {
-                pearlChains[0].positions.map((position, index) => (
-                    <Circle key={index} center={[position.latitude, position.longitude]} radius={7.5} pathOptions={{color: 'blue', fillColor: 'blue', fillOpacity: 0.5}}/>
+                pearlChains.map((pearlChain, index) => (
+                    pearlChain.positions.map((position) => (
+                        <Circle key={index} center={[position.latitude, position.longitude]} radius={7.5} pathOptions={pathOptionsPearlChainList[index]}/>
+                    ))
                 ))
             }
         </MapContainer>
