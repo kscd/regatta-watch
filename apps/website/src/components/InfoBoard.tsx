@@ -26,7 +26,7 @@ export const InfoBoard: React.FC<InfoBoardProps> = ({boatState}) => {
             <div className={"info-board-gauges"}>
                 <Gauge
                     width={150} height={100}
-                    value={boatState.velocity/100 > maxVelocity ? maxVelocity : boatState.velocity/100}
+                    value={boatState.velocity > maxVelocity ? maxVelocity : boatState.velocity}
                     valueMax={maxVelocity}
                     startAngle={-velocityGaugeAngle}
                     endAngle={velocityGaugeAngle}
@@ -37,7 +37,7 @@ export const InfoBoard: React.FC<InfoBoardProps> = ({boatState}) => {
                             transform: 'translate(0px, -20px)',
                         },
                     }}
-                    text={`${velocityFormat.format(boatState.velocity/100)}kn\n${velocityFormat.format(boatState.velocity*1.852/100)}km/h`}
+                    text={`${velocityFormat.format(boatState.velocity)}kn\n${velocityFormat.format(boatState.velocity*1.852)}km/h`}
                 />
                 <Gauge
                     width={100}
