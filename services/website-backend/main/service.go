@@ -401,7 +401,7 @@ func (s *regattaService) SetClockConfiguration(w http.ResponseWriter, r *http.Re
 	return
 }
 
-func (s *regattaService) ResetClockConfiguration(w http.ResponseWriter, r *http.Request) {
+func (s *regattaService) ResetClockConfiguration(w http.ResponseWriter, _ *http.Request) {
 	fmt.Println("ResetClockConfiguration called")
 
 	enableCors(&w)

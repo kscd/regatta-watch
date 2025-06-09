@@ -89,7 +89,7 @@
   height: 10vh;
 }
 
-.infoboard-gauges {
+.info-board-gauges {
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -98,7 +98,7 @@
   height: 10vh;
 }
 
-.infoboard-next {
+.info-board-next {
   height: 5vh;
 }
 

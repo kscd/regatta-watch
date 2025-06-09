@@ -1,4 +1,4 @@
-import { Infoboard } from './components/InfoBoard.tsx'
+import { InfoBoard } from './components/InfoBoard.tsx'
 import { RoundTimeBoard } from './components/RoundTimeBoard.tsx'
 //import { Ping } from './Ping.tsx'
 import { CountdownTimer } from './countdownTimer.tsx';
@@ -12,13 +12,13 @@ import './App.css'
 import {Map} from "./components/Map.tsx";
 
 function App() {
+
     const [isClockDialogOpen, setIsClockDialogOpen] = React.useState(false);
 
     //const regattaStartDate = new Date(1722682800000).getTime(); // Sat Aug 03 2024 13:00:00 GMT+0200 (Central European Summer Time)
     const regattaStartDate = new Date(1754132400000).getTime(); // Sat Aug 02 2025 13:00:00 GMT+0200 (Central European Summer Time)
 
-    const {position, pearlChain, roundTime} = useDataBase();
-
+    const {position1, pearlChain1, roundTime1,position2, pearlChain2, roundTime2} = useDataBase("Bluebird", "Vivace");
     const clockTime = useClockTime();
 
     const handleOpenClockDialog = () => {
@@ -29,10 +29,16 @@ function App() {
         setIsClockDialogOpen(false);
     };
 
-    const boatPosition = {
-        latitude: position.latitude,
-        longitude: position.longitude,
-        heading: position.heading
+    const boatPosition1 = {
+        latitude: position1.BoatInfo.latitude,
+        longitude: position1.BoatInfo.longitude,
+        heading: position1.BoatInfo.heading,
+    }
+
+    const boatPosition2 = {
+        latitude: position2.BoatInfo.latitude,
+        longitude: position2.BoatInfo.longitude,
+        heading: position2.BoatInfo.heading,
     }
 
     return (
@@ -51,36 +57,16 @@ function App() {
                 <div className={"regatta-container"}>
                     <div className={"boat-container"}>
                         <h2 className="boat-name">PSC Vivace (Kielzugvogel)</h2>
-                        <Infoboard
-                            latitude={position.latitude}
-                            longitude={position.longitude}
-                            heading={position.heading}
-                            velocity={position.velocity}
-                            distance={position.distance}
-                            crew0={position.crew0}
-                            crew1={position.crew1}
-                            nextCrew0={position.next_crew0}
-                            nextCrew1={position.next_crew1}
-                        />
-                        <RoundTimeBoard roundTimes={roundTime.round_times} sectionTimes={roundTime.section_times}></RoundTimeBoard>
+                        <InfoBoard boatState={position2.BoatInfo}/>
+                        <RoundTimeBoard roundTimes={roundTime2.round_times} sectionTimes={roundTime2.section_times}></RoundTimeBoard>
                     </div>
                     <div className="map-container">
-                        <Map boatPosition={boatPosition} pearlChain={pearlChain} />
+                        <Map boatPositions={[boatPosition1,boatPosition2]} pearlChains={[pearlChain1, pearlChain2]} />
                     </div>
                     <div className={"boat-container"}>
                         <h2 className="boat-name">PSC Bluebird (Conger)</h2>
-                        <Infoboard
-                            latitude={position.latitude}
-                            longitude={position.longitude}
-                            heading={position.heading}
-                            velocity={position.velocity}
-                            distance={position.distance}
-                            crew0={position.crew0}
-                            crew1={position.crew1}
-                            nextCrew0={position.next_crew0}
-                            nextCrew1={position.next_crew1}
-                        />
-                        <RoundTimeBoard roundTimes={roundTime.round_times} sectionTimes={roundTime.section_times}></RoundTimeBoard>
+                        <InfoBoard boatState={position1.BoatInfo}/>
+                        <RoundTimeBoard roundTimes={roundTime1.round_times} sectionTimes={roundTime1.section_times}></RoundTimeBoard>
                     </div>
                 </div>
             </div>

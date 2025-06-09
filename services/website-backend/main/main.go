@@ -85,7 +85,7 @@ func main() {
 		close(idleConnectionsClosed)
 	}()
 
-	boatList := []string{"Bluebird"}
+	boatList := []string{"Bluebird", "Vivace"}
 
 	fmt.Println("Service started and listening")
 
