@@ -15,8 +15,8 @@ export const InfoBoard: React.FC<InfoBoardProps> = ({boatState}) => {
     const displayNextCrew = boatState.next_crew0 !== "?"
 
     return(
-        <div className="infoboard">
-            <div className="infoboard-details">
+        <div className="info-board">
+            <div className="info-board-details">
                 {calcLatitudeFromNumber(boatState.latitude)}, {calcLongitudeFromNumber(boatState.longitude)}
                 <br/>
                 {distanceFormat.format(boatState.distance)} NM, {distanceFormat.format(boatState.distance * 1.852)} km

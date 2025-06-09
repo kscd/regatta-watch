@@ -39,7 +39,7 @@ export const RoundTimeBoard: React.FC<RoundTimeBoardProps> = ({ roundTimes, sect
     });
 
     return (
-        <div className="datagrid-container">
+        <div className="data-grid-container">
              <DataGrid
                 rows={rows.reverse()}
                 columns={columns}

@@ -3,17 +3,21 @@ import { RoundTimeBoard } from './components/RoundTimeBoard.tsx'
 //import { Ping } from './Ping.tsx'
 import { CountdownTimer } from './countdownTimer.tsx';
 import { useDataBase } from './hooks/useDataBase.tsx';
-import {Button} from "@mui/material";
+import {
+    IconButton,
+} from "@mui/material";
 import React from "react";
 import {ClockDialog} from "./components/clockDialog.tsx";
 import {useClockTime} from "./hooks/useClockTime.tsx";
 import 'leaflet/dist/leaflet.css';
 import './App.css'
 import {Map} from "./components/Map.tsx";
+import MenuIcon from '@mui/icons-material/Menu';
+import {MenuDrawer} from "./components/MenuDrawer.tsx";
 
 function App() {
-
     const [isClockDialogOpen, setIsClockDialogOpen] = React.useState(false);
+    const [isMenuDrawerOpen, setIsMenuDrawerOpen] = React.useState(false);
 
     //const regattaStartDate = new Date(1722682800000).getTime(); // Sat Aug 03 2024 13:00:00 GMT+0200 (Central European Summer Time)
     const regattaStartDate = new Date(1754132400000).getTime(); // Sat Aug 02 2025 13:00:00 GMT+0200 (Central European Summer Time)
@@ -22,11 +26,20 @@ function App() {
     const clockTime = useClockTime();
 
     const handleOpenClockDialog = () => {
+        handleCloseMenuDrawer();
         setIsClockDialogOpen(true);
     };
 
     const handleCloseClockDialog = () => {
         setIsClockDialogOpen(false);
+    };
+
+    const handleOpenMenuDrawer = () => {
+        setIsMenuDrawerOpen(true);
+    };
+
+    const handleCloseMenuDrawer = () => {
+        setIsMenuDrawerOpen(false);
     };
 
     const boatPosition1 = {
@@ -47,11 +60,15 @@ function App() {
                 <div className={"header-container"}>
                     <div className={"clock-container"}>
                         {clockTime}
-                        <Button variant="contained" onClick={handleOpenClockDialog}>Configure clock</Button>
                     </div>
                     <h1>24h Regatta 2025</h1>
                     <div className={"countdown-container"}>
                         <CountdownTimer targetDate={regattaStartDate}/>
+                    </div>
+                    <div className={"menu-button-container"}>
+                        <IconButton aria-label="delete" onClick={handleOpenMenuDrawer}>
+                            <MenuIcon />
+                        </IconButton>
                     </div>
                 </div>
                 <div className={"regatta-container"}>
@@ -71,6 +88,7 @@ function App() {
                 </div>
             </div>
             <ClockDialog open={isClockDialogOpen} handleClose={handleCloseClockDialog} />
+            <MenuDrawer open={isMenuDrawerOpen} handleClose={handleCloseMenuDrawer} onOpenDialog={handleOpenClockDialog} ></MenuDrawer>
         </>
     )
 }
