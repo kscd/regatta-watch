@@ -36,6 +36,20 @@ func NewDatabaseClient(config DatabaseConfig, table string) (*DatabaseClient, er
 	}, nil
 }
 
+func (c *DatabaseClient) TruncateTable(ctx context.Context) error {
+	query := fmt.Sprintf(`TRUNCATE TABLE "%s";`, c.Table)
+
+	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
+	defer cancel()
+
+	_, err := c.Database.ExecContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("truncate table: %w", err)
+	}
+
+	return nil
+}
+
 func (c *DatabaseClient) InsertPositions(ctx context.Context, position *PushMessageRequest) error {
 	if position == nil {
 		return errors.New("position is set to nil")
