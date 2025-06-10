@@ -25,7 +25,7 @@ type FetchPositionResponse struct {
 type FetchPearlChainRequest struct {
 	Boat     string `json:"boat"`
 	Length   int    `json:"length"`
-	Duration int    `json:"duration"`
+	Interval int    `json:"interval"`
 }
 
 type position struct {

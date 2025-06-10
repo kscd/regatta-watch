@@ -14,10 +14,12 @@ import './App.css'
 import {Map} from "./components/Map.tsx";
 import MenuIcon from '@mui/icons-material/Menu';
 import {MenuDrawer} from "./components/MenuDrawer.tsx";
+import {PearlChainDialog} from "./components/PearlChainDialog.tsx";
 
 function App() {
-    const [isClockDialogOpen, setIsClockDialogOpen] = React.useState(false);
     const [isMenuDrawerOpen, setIsMenuDrawerOpen] = React.useState(false);
+    const [isClockDialogOpen, setIsClockDialogOpen] = React.useState(false);
+    const [isPearlChainDialogOpen, setIsPearlChainDialogOpen] = React.useState(false);
 
     //const regattaStartDate = new Date(1722682800000).getTime(); // Sat Aug 03 2024 13:00:00 GMT+0200 (Central European Summer Time)
     const regattaStartDate = new Date(1754132400000).getTime(); // Sat Aug 02 2025 13:00:00 GMT+0200 (Central European Summer Time)
@@ -25,21 +27,30 @@ function App() {
     const {position1, pearlChain1, roundTime1, position2, pearlChain2, roundTime2} = useDataBase("Bluebird", "Vivace");
     const clockTime = useClockTime();
 
-    const handleOpenClockDialog = () => {
-        handleCloseMenuDrawer();
-        setIsClockDialogOpen(true);
-    };
-
-    const handleCloseClockDialog = () => {
-        setIsClockDialogOpen(false);
-    };
-
     const handleOpenMenuDrawer = () => {
         setIsMenuDrawerOpen(true);
     };
 
     const handleCloseMenuDrawer = () => {
         setIsMenuDrawerOpen(false);
+    };
+
+    const handleOpenClockDialog = () => {
+        setIsClockDialogOpen(true);
+        handleCloseMenuDrawer();
+    };
+
+    const handleCloseClockDialog = () => {
+        setIsClockDialogOpen(false);
+    };
+
+    const handleOpenPearlChainDialog = () => {
+        setIsPearlChainDialogOpen(true);
+        handleCloseMenuDrawer();
+    };
+
+    const handleClosePearlChainDialog = () => {
+        setIsPearlChainDialogOpen(false);
     };
 
     const boatPosition1 = {
@@ -87,8 +98,13 @@ function App() {
                     </div>
                 </div>
             </div>
+            <MenuDrawer
+                open={isMenuDrawerOpen}
+                handleClose={handleCloseMenuDrawer}
+                onOpenClockDialog={handleOpenClockDialog}
+                onOpenPearlChainDialog={handleOpenPearlChainDialog} />
             <ClockDialog open={isClockDialogOpen} handleClose={handleCloseClockDialog} />
-            <MenuDrawer open={isMenuDrawerOpen} handleClose={handleCloseMenuDrawer} onOpenDialog={handleOpenClockDialog} ></MenuDrawer>
+            <PearlChainDialog open={isPearlChainDialogOpen} handleClose={handleClosePearlChainDialog}></PearlChainDialog>
         </>
     )
 }

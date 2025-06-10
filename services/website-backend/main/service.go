@@ -217,11 +217,11 @@ func (s *regattaService) FetchPearlChain(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if m.Duration <= 0 || m.Length <= 0 {
+	if m.Length <= 0 || m.Interval <= 0 {
 		return
 	}
 
-	pearlChainTime := time.Duration(m.Duration) * time.Second // time.Duration is needed for type matching
+	pearlChainTime := time.Duration(m.Length) * time.Second // time.Duration is needed for type matching
 
 	endTime := s.clock.Now()
 	startTime := endTime.Add(-pearlChainTime)
@@ -240,9 +240,7 @@ func (s *regattaService) FetchPearlChain(w http.ResponseWriter, r *http.Request)
 		// initial value of nextStop.
 
 		// Calculate the time step for the pearl chain from database data
-		dbEndTime := positions[0].Time
-		dbStartTime := positions[len(positions)-2].Time                        // need an offset of 1 for heading calculation
-		pearlChainStep := dbEndTime.Sub(dbStartTime) / time.Duration(m.Length) // time.Duration is needed for type matching
+		pearlChainStep := time.Duration(m.Interval) * time.Second
 		nextStop := endTime.Add(-pearlChainStep)
 
 		var pearlChain []position

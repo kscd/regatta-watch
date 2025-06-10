@@ -12,10 +12,13 @@ const getPosition = async (boat: string): Promise<BoatInfo> => {
 }
 
 const getPearlChain = async (boat: string): Promise<PearlChain> => {
+
+    const config = BoatService.getPearlChainConfiguration();
+
     const response = await fetch('http://localhost:8091/fetchpearlchain',
         {
             method: 'POST',
-            body: JSON.stringify({boat: boat, duration: 20, length: 10})
+            body: JSON.stringify({boat: boat, length: config.length, interval: config.interval})
         }
     );
     if (!response.ok) {
@@ -43,6 +46,22 @@ const ping = async (): Promise<Status> => {
         throw new Error('Network response was not ok');
     }
     return response.json();
+}
+
+const setPearlChainConfiguration = ( config: PearlChainConfiguration): void => {
+    localStorage.setItem('PearlChainLength', config.length.toString());
+    localStorage.setItem('PearlChainInterval', config.interval.toString());
+}
+
+const getPearlChainConfiguration = (): PearlChainConfiguration => {
+    localStorage.getItem('PearlChainLength');
+    localStorage.getItem('PearlChainInterval');
+    const length = parseInt(localStorage.getItem('PearlChainLength') || '3600', 10);
+    const interval = parseInt(localStorage.getItem('PearlChainInterval') || '60', 10);
+    return {
+        length: length,
+        interval: interval
+    };
 }
 
 export type BoatInfo = {
@@ -76,9 +95,16 @@ export type RoundTime = {
 
 export type Status = string;
 
+export type PearlChainConfiguration = {
+    length: number; // in seconds
+    interval: number; // in seconds
+}
+
 export const BoatService = {
     getPosition,
     getPearlChain,
     getRoundTime,
-    ping
+    ping,
+    getPearlChainConfiguration,
+    setPearlChainConfiguration
 }
