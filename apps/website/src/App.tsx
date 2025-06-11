@@ -16,11 +16,13 @@ import MenuIcon from '@mui/icons-material/Menu';
 import {MenuDrawer} from "./components/MenuDrawer.tsx";
 import {PearlChainDialog} from "./components/PearlChainDialog.tsx";
 import {Buoy, BuoyService, FetchedBuoys} from "./services/buoyService.tsx";
+import {BuoyDialog} from "./components/BuoyDialog.tsx";
 
 function App() {
     const [isMenuDrawerOpen, setIsMenuDrawerOpen] = React.useState(false);
     const [isClockDialogOpen, setIsClockDialogOpen] = React.useState(false);
     const [isPearlChainDialogOpen, setIsPearlChainDialogOpen] = React.useState(false);
+    const [isBuoyDialogOpen, setIsBuoyDialogOpen] = React.useState(false);
     const [buoys, setBuoys] = React.useState<Buoy[]>([]);
 
     //const regattaStartDate = new Date(1722682800000).getTime(); // Sat Aug 03 2024 13:00:00 GMT+0200 (Central European Summer Time)
@@ -61,6 +63,15 @@ function App() {
 
     const handleClosePearlChainDialog = () => {
         setIsPearlChainDialogOpen(false);
+    };
+
+    const handleOpenBuoyDialog = () => {
+        setIsBuoyDialogOpen(true);
+        handleCloseMenuDrawer();
+    };
+
+    const handleCloseBuoyDialog = () => {
+        setIsBuoyDialogOpen(false);
     };
 
     const boatPosition1 = {
@@ -112,9 +123,12 @@ function App() {
                 open={isMenuDrawerOpen}
                 handleClose={handleCloseMenuDrawer}
                 onOpenClockDialog={handleOpenClockDialog}
-                onOpenPearlChainDialog={handleOpenPearlChainDialog} />
+                onOpenPearlChainDialog={handleOpenPearlChainDialog}
+                onOpenBuoyDialog={handleOpenBuoyDialog}
+            />
             <ClockDialog open={isClockDialogOpen} handleClose={handleCloseClockDialog} />
             <PearlChainDialog open={isPearlChainDialogOpen} handleClose={handleClosePearlChainDialog}></PearlChainDialog>
+            <BuoyDialog open={isBuoyDialogOpen} handleClose={handleCloseBuoyDialog}></BuoyDialog>
         </>
     )
 }
