@@ -2,20 +2,17 @@ import React from "react";
 import L from 'leaflet';
 import {Circle, MapContainer, Polyline, TileLayer} from "react-leaflet";
 import {PearlChain, Position} from "../services/boatService.tsx";
+import {Buoy} from "../services/buoyService.tsx";
 
-type MapProps = { boatPositions: Position[], pearlChains: PearlChain[]};
+type MapProps = {buoys: Buoy[], boatPositions: Position[], pearlChains: PearlChain[]};
 
-export const Map: React.FC<MapProps> = ({boatPositions, pearlChains}) => {
+export const Map: React.FC<MapProps> = ({buoys, boatPositions, pearlChains}) => {
     const initialZoom = 15;
 
     const bounds: L.LatLngBoundsExpression = [
         [53.5677 - 0.015, 10.006 - 0.015],
         [53.5677 + 0.015, 10.006 + 0.015]
     ];
-
-    const buoy1: L.LatLngExpression = [53.565538, 10.009123]
-    const buoy2: L.LatLngExpression = [53.562266, 10.00422]
-    const buoy3: L.LatLngExpression = [53.575497, 10.005418]
 
     const positions: L.LatLngExpression[] = [];
     const polyLines: L.LatLngExpression[][] = [];
@@ -62,9 +59,11 @@ export const Map: React.FC<MapProps> = ({boatPositions, pearlChains}) => {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <Circle center={buoy1} radius={10} pathOptions={{color: 'red', fillColor: 'orange', fillOpacity: 1}}/>
-            <Circle center={buoy2} radius={10} pathOptions={{color: 'red', fillColor: 'orange', fillOpacity: 1}}/>
-            <Circle center={buoy3} radius={10} pathOptions={{color: 'red', fillColor: 'orange', fillOpacity: 1}}/>
+            {
+                buoys.map((buoy, index) => (
+                    <Circle key={index} center={[buoy.latitude, buoy.longitude]} radius={10} pathOptions={{color: 'red', fillColor: 'yellow', fillOpacity: 1}} />
+                ))
+            }
             {
                 polyLines.map((polyline, index) => (
                     <Polyline key={index} positions={polyline} pathOptions={pathOptionsPearlChainPolylineList[index]} />

@@ -6,7 +6,7 @@ import { useDataBase } from './hooks/useDataBase.tsx';
 import {
     IconButton,
 } from "@mui/material";
-import React from "react";
+import React, {useEffect} from "react";
 import {ClockDialog} from "./components/clockDialog.tsx";
 import {useClockTime} from "./hooks/useClockTime.tsx";
 import 'leaflet/dist/leaflet.css';
@@ -15,17 +15,27 @@ import {Map} from "./components/Map.tsx";
 import MenuIcon from '@mui/icons-material/Menu';
 import {MenuDrawer} from "./components/MenuDrawer.tsx";
 import {PearlChainDialog} from "./components/PearlChainDialog.tsx";
+import {Buoy, BuoyService, FetchedBuoys} from "./services/buoyService.tsx";
 
 function App() {
     const [isMenuDrawerOpen, setIsMenuDrawerOpen] = React.useState(false);
     const [isClockDialogOpen, setIsClockDialogOpen] = React.useState(false);
     const [isPearlChainDialogOpen, setIsPearlChainDialogOpen] = React.useState(false);
+    const [buoys, setBuoys] = React.useState<Buoy[]>([]);
 
     //const regattaStartDate = new Date(1722682800000).getTime(); // Sat Aug 03 2024 13:00:00 GMT+0200 (Central European Summer Time)
     const regattaStartDate = new Date(1754132400000).getTime(); // Sat Aug 02 2025 13:00:00 GMT+0200 (Central European Summer Time)
 
     const {position1, pearlChain1, roundTime1, position2, pearlChain2, roundTime2} = useDataBase("Bluebird", "Vivace");
     const clockTime = useClockTime();
+
+    useEffect(() => {
+        BuoyService.getBuoys()
+            .then((fetchedBuoys: FetchedBuoys) => {
+                setBuoys(fetchedBuoys.buoys);
+            })
+            .catch(() => console.error('Error fetching buoys'))
+    },[])
 
     const handleOpenMenuDrawer = () => {
         setIsMenuDrawerOpen(true);
@@ -89,7 +99,7 @@ function App() {
                         <RoundTimeBoard roundTimes={roundTime2.round_times} sectionTimes={roundTime2.section_times}></RoundTimeBoard>
                     </div>
                     <div className="map-container">
-                        <Map boatPositions={[boatPosition1, boatPosition2]} pearlChains={[pearlChain1, pearlChain2]} />
+                        <Map buoys={buoys} boatPositions={[boatPosition1, boatPosition2]} pearlChains={[pearlChain1, pearlChain2]} />
                     </div>
                     <div className={"boat-container"}>
                         <h2 className="boat-name">PSC Bluebird (Conger)</h2>

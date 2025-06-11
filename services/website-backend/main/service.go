@@ -434,6 +434,41 @@ func (s *regattaService) GetClockTime(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
+func (s *regattaService) Fetchbuoys(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("FetchBuoys called")
+
+	enableCors(&w)
+
+	ctx := r.Context()
+
+	buoys, err := s.storageClient.GetBuoysAtTime(ctx, s.clock.Now())
+	if err != nil {
+		err = fmt.Errorf("fetch buoys: get buoys at time: %w", err)
+		s.LogError(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	response := FetchBuoysResponse{
+		Buoys: buoys,
+	}
+
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		err = fmt.Errorf("fetch buoys: marshal response: %w", err)
+		s.LogError(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if _, err = w.Write(responseBytes); err != nil {
+		err = fmt.Errorf("fetch buoys: write to http writer: %w", err)
+		s.LogError(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
 func (s *regattaService) ReceiveDataTicker(boatList []string, done chan struct{}) {
 	fmt.Println("Starting ticker")
 

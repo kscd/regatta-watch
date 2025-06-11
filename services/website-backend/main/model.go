@@ -123,3 +123,7 @@ type SetClockConfigurationRequest struct {
 type GetClockTimeResponse struct {
 	Time time.Time `json:"time"`
 }
+
+type FetchBuoysResponse struct {
+	Buoys []buoy `json:"buoys"`
+}

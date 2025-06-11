@@ -18,7 +18,7 @@ const getPearlChain = async (boat: string): Promise<PearlChain> => {
     const response = await fetch('http://localhost:8091/fetchpearlchain',
         {
             method: 'POST',
-            body: JSON.stringify({boat: boat, length: config.length, interval: config.interval})
+            body: JSON.stringify({boat: boat, length: config.length/60, interval: config.interval/60})
         }
     );
     if (!response.ok) {
