@@ -110,7 +110,7 @@ function App() {
                         <RoundTimeBoard roundTimes={roundTime2.round_times} sectionTimes={roundTime2.section_times}></RoundTimeBoard>
                     </div>
                     <div className="map-container">
-                        <Map buoys={buoys} boatPositions={[boatPosition1, boatPosition2]} pearlChains={[pearlChain1, pearlChain2]} />
+                        <Map buoys={buoys} boatPositions={[boatPosition1, boatPosition2]} pearlChains={[pearlChain1, pearlChain2]} buoysOld={[]} />
                     </div>
                     <div className={"boat-container"}>
                         <h2 className="boat-name">PSC Bluebird (Conger)</h2>
@@ -128,7 +128,7 @@ function App() {
             />
             <ClockDialog open={isClockDialogOpen} handleClose={handleCloseClockDialog} />
             <PearlChainDialog open={isPearlChainDialogOpen} handleClose={handleClosePearlChainDialog}></PearlChainDialog>
-            <BuoyDialog open={isBuoyDialogOpen} handleClose={handleCloseBuoyDialog}></BuoyDialog>
+            <BuoyDialog open={isBuoyDialogOpen} handleClose={handleCloseBuoyDialog} buoys={buoys}></BuoyDialog>
         </>
     )
 }

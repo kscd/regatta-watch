@@ -4,9 +4,9 @@ import {Circle, MapContainer, Polyline, TileLayer} from "react-leaflet";
 import {PearlChain, Position} from "../services/boatService.tsx";
 import {Buoy} from "../services/buoyService.tsx";
 
-type MapProps = {buoys: Buoy[], boatPositions: Position[], pearlChains: PearlChain[]};
+type MapProps = {buoys: Buoy[], boatPositions: Position[], pearlChains: PearlChain[], buoysOld: Buoy[]};
 
-export const Map: React.FC<MapProps> = ({buoys, boatPositions, pearlChains}) => {
+export const Map: React.FC<MapProps> = ({buoys, boatPositions, pearlChains, buoysOld}) => {
     const initialZoom = 15;
 
     const bounds: L.LatLngBoundsExpression = [
@@ -59,6 +59,11 @@ export const Map: React.FC<MapProps> = ({buoys, boatPositions, pearlChains}) => 
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            {
+                buoysOld.map((buoy, index) => (
+                    <Circle key={index} center={[buoy.latitude, buoy.longitude]} radius={10} pathOptions={{color: 'blue', fillColor: 'cyan', fillOpacity: 1}} />
+                ))
+            }
             {
                 buoys.map((buoy, index) => (
                     <Circle key={index} center={[buoy.latitude, buoy.longitude]} radius={10} pathOptions={{color: 'red', fillColor: 'yellow', fillOpacity: 1}} />

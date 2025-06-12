@@ -145,6 +145,64 @@
   width: 25vw;
 }
 
+.buoy-dialog {
+    display: flex;
+    gap: 1em;
+    height: calc(90vh - 3rem);
+}
+
+.buoy-dialog-map-container {
+  width: 30vw;
+  height: 100%;
+}
+
+.buoy-container{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  gap: 1em;
+}
+
+.buoy-dialog-elements-container{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1em;
+}
+
+.buoy-dialog-controls-container{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1em;
+  overflow-y: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.buoy-controls-container{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: end;
+  gap: 1em;
+}
+
+.buoy-coordinate-container{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.buoy-coordinate-fields{
+  display: flex;
+  width: 17rem;
+  gap: 1rem;
+}
+
 /* countdown */
 
 .show-counter {
