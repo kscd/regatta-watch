@@ -42,6 +42,8 @@ type storageInterface interface {
 	GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error)
 	GetRegattaAtTime(ctx context.Context, time time.Time) (*string, error)
 	GetBuoysAtTime(ctx context.Context, time time.Time) ([]buoy, error)
+	GetBuoyAtVersion(ctx context.Context, id string, version int) ([]buoy, error)
+	SetBuoys(ctx context.Context, buoys []buoy) error
 	GetCurrentRound(ctx context.Context, regattaID, boatID string) (int, error)
 	GetCurrentSection(ctx context.Context, roundID int, regattaID, boatID string) (int, error)
 	GetLastCompletedRound(ctx context.Context, regattaID, boatID string) (int, error)
@@ -434,7 +436,7 @@ func (s *regattaService) GetClockTime(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func (s *regattaService) Fetchbuoys(w http.ResponseWriter, r *http.Request) {
+func (s *regattaService) FetchBuoys(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("FetchBuoys called")
 
 	enableCors(&w)
@@ -467,6 +469,68 @@ func (s *regattaService) Fetchbuoys(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+}
+
+func (s *regattaService) SetBuoys(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("SetBuoys called")
+
+	enableCors(&w)
+
+	ctx := r.Context()
+
+	// parse data from request
+	var m SetBuoysRequest
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		err = fmt.Errorf("set buoys: read http body: %w", err)
+		s.LogError(err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	if err = json.Unmarshal(body, &m); err != nil {
+		err = fmt.Errorf("set buoys: unmarshal http body: %w", err)
+		s.LogError(err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	err = s.storageClient.SetBuoys(ctx, m.Buoys)
+	if err != nil {
+		err = fmt.Errorf("set buoys: set buoys: %w", err)
+		s.LogError(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// Figure out the maximum affected time range and just recalculate
+	// everything. This is not the most efficient way, but it is the simplest
+	// one and sufficient for now.
+
+	globalStartTime := m.Buoys[0].StartTime
+	globalEndTime := m.Buoys[0].EndTime
+	for _, buoy := range m.Buoys {
+		if buoy.StartTime.Before(globalStartTime) {
+			globalStartTime = buoy.StartTime
+		}
+		if globalEndTime == nil {
+			continue
+		}
+		if buoy.EndTime == nil {
+			globalEndTime = nil
+			continue
+		}
+		if buoy.EndTime.After(*globalEndTime) {
+			globalEndTime = buoy.EndTime
+		}
+	}
+
+	// TODO:
+	//  - Drop the rounds and sections that are fully in the time range
+	//  - Remove the end-time from the rounds and sections that are partially in the time range
+	//  - Query all relevant positions in the time range
+	//  - Recalculate the rounds and sections via updateRoundsAndSections()
+
+	return
 }
 
 func (s *regattaService) ReceiveDataTicker(boatList []string, done chan struct{}) {

@@ -3,6 +3,7 @@ import L from 'leaflet';
 import {Circle, MapContainer, Polyline, TileLayer} from "react-leaflet";
 import {PearlChain, Position} from "../services/boatService.tsx";
 import {Buoy} from "../services/buoyService.tsx";
+import {MathService} from "../services/mathService.tsx";
 
 type MapProps = {buoys: Buoy[], boatPositions: Position[], pearlChains: PearlChain[], buoysOld: Buoy[]};
 
@@ -25,6 +26,18 @@ export const Map: React.FC<MapProps> = ({buoys, boatPositions, pearlChains, buoy
                 polyLines[index].push([position.latitude, position.longitude]);
             }
         }
+    }
+
+    const buoyAnglePolyLines: L.LatLngExpression[][] = [];
+    for (const buoy of buoys) {
+        const [newLat, newLon] = MathService.calculateNewPosition(buoy.latitude, buoy.longitude, buoy.pass_angle, 250);
+        buoyAnglePolyLines.push([[buoy.latitude, buoy.longitude], [newLat, newLon]]);
+    }
+
+    const buoyAnglePolyLinesOld: L.LatLngExpression[][] = [];
+    for (const buoy of buoysOld) {
+        const [newLat, newLon] = MathService.calculateNewPosition(buoy.latitude, buoy.longitude, buoy.pass_angle, 250);
+        buoyAnglePolyLinesOld.push([[buoy.latitude, buoy.longitude], [newLat, newLon]]);
     }
 
     const pathOptionsBoatList = [{
@@ -60,8 +73,18 @@ export const Map: React.FC<MapProps> = ({buoys, boatPositions, pearlChains, buoy
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             {
+                buoyAnglePolyLinesOld.map((polyline, index) => (
+                    <Polyline key={index} positions={polyline} pathOptions={{color: 'blue'}} />
+                ))
+            }
+            {
                 buoysOld.map((buoy, index) => (
                     <Circle key={index} center={[buoy.latitude, buoy.longitude]} radius={10} pathOptions={{color: 'blue', fillColor: 'cyan', fillOpacity: 1}} />
+                ))
+            }
+            {
+                buoyAnglePolyLines.map((polyline, index) => (
+                    <Polyline key={index} positions={polyline} pathOptions={{color: 'red'}} />
                 ))
             }
             {

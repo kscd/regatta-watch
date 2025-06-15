@@ -229,7 +229,7 @@ func (c *databaseClient) GetRegattaAtTime(ctx context.Context, time time.Time) (
 
 func (c *databaseClient) GetBuoysAtTime(ctx context.Context, time time.Time) ([]buoy, error) {
 	query := fmt.Sprintf(`
-		SELECT id, version, latitude, longitude, pass_angle, is_pass_direction_clockwise
+		SELECT id, version, latitude, longitude, pass_angle, is_pass_direction_clockwise, start_time, end_time
 		FROM %s
         WHERE id = ANY($1)
 		AND start_time <= $2
@@ -256,6 +256,8 @@ func (c *databaseClient) GetBuoysAtTime(ctx context.Context, time time.Time) ([]
 			&buoy.Longitude,
 			&buoy.PassAngle,
 			&buoy.IsPassDirectionClockwise,
+			&buoy.StartTime,
+			&buoy.EndTime,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("parse row: %w", err)
@@ -265,6 +267,81 @@ func (c *databaseClient) GetBuoysAtTime(ctx context.Context, time time.Time) ([]
 	}
 
 	return buoys, nil
+}
+
+func (c *databaseClient) GetBuoyAtVersion(ctx context.Context, id string, version int) ([]buoy, error) {
+	query := fmt.Sprintf(`
+		SELECT id, version, latitude, longitude, pass_angle, is_pass_direction_clockwise, start_time, end_time
+		FROM %s
+        WHERE id = $1
+		AND version = $2
+	`, c.buoyTable)
+
+	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
+	defer cancel()
+
+	rows, err := c.database.QueryContext(ctx, query, id, version)
+	if err != nil {
+		return nil, fmt.Errorf("query buoys: %w", err)
+	}
+
+	var buoys []buoy
+	for rows.Next() {
+		var buoy buoy
+		err = rows.Scan(
+			&buoy.ID,
+			&buoy.Version,
+			&buoy.Latitude,
+			&buoy.Longitude,
+			&buoy.PassAngle,
+			&buoy.IsPassDirectionClockwise,
+			&buoy.StartTime,
+			&buoy.EndTime,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("parse row: %w", err)
+		}
+		buoy.ToleranceInMeters = 100
+		buoys = append(buoys, buoy)
+	}
+
+	return buoys, nil
+}
+
+func (c *databaseClient) SetBuoys(ctx context.Context, buoys []buoy) error {
+	if buoys == nil {
+		return errors.New("buoys is set to nil")
+	}
+
+	query := fmt.Sprintf(`
+        UPDATE %s
+        SET 
+            latitude = $1,
+            longitude = $2,
+            pass_angle = $3,
+            is_pass_direction_clockwise = $4,
+        WHERE 
+            id = $4
+            version = $5;
+    `, c.buoyTable)
+
+	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
+	defer cancel()
+
+	for _, buoy := range buoys {
+		_, err := c.database.ExecContext(ctx, query,
+			buoy.Latitude,
+			buoy.Longitude,
+			buoy.PassAngle,
+			buoy.IsPassDirectionClockwise,
+			buoy.ID,
+			buoy.Version)
+		if err != nil {
+			return fmt.Errorf("insert buoy: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (c *databaseClient) GetCurrentRound(ctx context.Context, regattaID, boatID string) (int, error) {

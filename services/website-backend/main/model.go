@@ -39,13 +39,15 @@ type FetchPearlChainResponse struct {
 }
 
 type buoy struct {
-	ID                       string  `json:"id"`
-	Version                  int     `json:"version"`
-	Latitude                 float64 `json:"latitude"`
-	Longitude                float64 `json:"longitude"`
-	PassAngle                float64 `json:"pass_angle"`
-	IsPassDirectionClockwise bool    `json:"is_pass_direction_clockwise"`
-	ToleranceInMeters        float64 `json:"tolerance"`
+	ID                       string     `json:"id"`
+	Version                  int        `json:"version"`
+	Latitude                 float64    `json:"latitude"`
+	Longitude                float64    `json:"longitude"`
+	PassAngle                float64    `json:"pass_angle"`
+	IsPassDirectionClockwise bool       `json:"is_pass_direction_clockwise"`
+	ToleranceInMeters        float64    `json:"tolerance"`
+	StartTime                time.Time  `json:"start_time"`
+	EndTime                  *time.Time `json:"end_time"`
 }
 
 type PositionAtTime struct {
@@ -125,5 +127,9 @@ type GetClockTimeResponse struct {
 }
 
 type FetchBuoysResponse struct {
+	Buoys []buoy `json:"buoys"`
+}
+
+type SetBuoysRequest struct {
 	Buoys []buoy `json:"buoys"`
 }

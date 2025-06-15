@@ -21,7 +21,7 @@ export const BuoyDialog: React.FC<BuoyDialogProps> = ({open, handleClose, buoys}
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>, buoyId: string) => {
         const { name, value } = event.target;
 
-        const parsedValue = name === "latitude" || name === "longitude"
+        const parsedValue = name === "latitude" || name === "longitude" || name === "pass_angle"
             ? parseFloat(value) || 0
             : value;
 
@@ -37,7 +37,7 @@ export const BuoyDialog: React.FC<BuoyDialogProps> = ({open, handleClose, buoys}
         );
     };
 
-    const handleCoordinateChange = (buoyId: string, fieldName: 'latitude' | 'longitude', increment: number) => {
+    const handleCoordinateChange = (buoyId: string, fieldName: 'latitude' | 'longitude' | 'pass_angle', increment: number) => {
         setBuoyData(prevBuoyData =>
             prevBuoyData.map(buoy => {
                 if (buoy.id === buoyId) {
@@ -98,6 +98,20 @@ export const BuoyDialog: React.FC<BuoyDialogProps> = ({open, handleClose, buoys}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e, buoy.id)}
                                     />
                                     <IconButton onClick={() => handleCoordinateChange(buoy.id, 'longitude', +0.0001)}>
+                                        <AddIcon />
+                                    </IconButton>
+                                </div>
+                                <div className={"buoy-coordinate-container"}>
+                                    <IconButton onClick={() => handleCoordinateChange(buoy.id, 'pass_angle', -1)}>
+                                        <RemoveIcon />
+                                    </IconButton>
+                                    <TextField
+                                        label="Pass angle"
+                                        name="pass_angle"
+                                        value={buoy.pass_angle}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e, buoy.id)}
+                                    />
+                                    <IconButton onClick={() => handleCoordinateChange(buoy.id, 'pass_angle', +1)}>
                                         <AddIcon />
                                     </IconButton>
                                 </div>
