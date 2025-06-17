@@ -227,6 +227,64 @@ func (c *databaseClient) GetRegattaAtTime(ctx context.Context, time time.Time) (
 	return &regattaID, nil
 }
 
+func (c *databaseClient) GetRegattasInTimeInterval(ctx context.Context, startTime, endTime time.Time) ([]string, error) {
+	query := fmt.Sprintf(`
+		SELECT id
+		FROM %s
+		WHERE start_time <= $1 AND end_time >= $2
+		ORDER BY start_time ASC;
+	`, c.regattaTable)
+
+	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
+	defer cancel()
+
+	rows, err := c.database.QueryContext(ctx, query, endTime, startTime)
+	if err != nil {
+		return nil, fmt.Errorf("query regattas: %w", err)
+	}
+
+	var regattas []string
+	for rows.Next() {
+		var regattaID string
+		err = rows.Scan(&regattaID)
+		if err != nil {
+			return nil, fmt.Errorf("parse row: %w", err)
+		}
+		regattas = append(regattas, regattaID)
+	}
+
+	return regattas, nil
+}
+
+func (c *databaseClient) GetRegattasSince(ctx context.Context, time time.Time) ([]string, error) {
+	query := fmt.Sprintf(`
+		SELECT id
+		FROM %s
+		WHERE start_time >= $1
+		ORDER BY start_time ASC;
+	`, c.regattaTable)
+
+	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
+	defer cancel()
+
+	rows, err := c.database.QueryContext(ctx, query, time)
+	if err != nil {
+		return nil, fmt.Errorf("query regattas: %w", err)
+	}
+
+	var regattas []string
+	for rows.Next() {
+		var regattaID string
+		err = rows.Scan(&regattaID)
+		if err != nil {
+			return nil, fmt.Errorf("parse row: %w", err)
+		}
+		regattas = append(regattas, regattaID)
+	}
+
+	return regattas, nil
+}
+
 func (c *databaseClient) GetBuoysAtTime(ctx context.Context, time time.Time) ([]buoy, error) {
 	query := fmt.Sprintf(`
 		SELECT id, version, latitude, longitude, pass_angle, is_pass_direction_clockwise, start_time, end_time

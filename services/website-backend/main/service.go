@@ -41,6 +41,8 @@ type storageInterface interface {
 	GetLastPosition(ctx context.Context, boat string, lowerBound, upperBound time.Time) (*StoragePosition, error)
 	GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error)
 	GetRegattaAtTime(ctx context.Context, time time.Time) (*string, error)
+	GetRegattasInTimeInterval(ctx context.Context, startTime, endTime time.Time) ([]string, error)
+	GetRegattasSince(ctx context.Context, time time.Time) ([]string, error)
 	GetBuoysAtTime(ctx context.Context, time time.Time) ([]buoy, error)
 	GetBuoyAtVersion(ctx context.Context, id string, version int) ([]buoy, error)
 	SetBuoys(ctx context.Context, buoys []buoy) error
@@ -502,10 +504,7 @@ func (s *regattaService) SetBuoys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Figure out the maximum affected time range and just recalculate
-	// everything. This is not the most efficient way, but it is the simplest
-	// one and sufficient for now.
-
+	// Figure out the maximum affected time range
 	globalStartTime := m.Buoys[0].StartTime
 	globalEndTime := m.Buoys[0].EndTime
 	for _, buoy := range m.Buoys {
@@ -524,13 +523,33 @@ func (s *regattaService) SetBuoys(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// TODO:
-	//  - Drop the rounds and sections that are fully in the time range
-	//  - Remove the end-time from the rounds and sections that are partially in the time range
-	//  - Query all relevant positions in the time range
-	//  - Recalculate the rounds and sections via updateRoundsAndSections()
+	// Get all regattas in the affected time range
+	var regattas []string
+	if globalEndTime == nil {
+		regattas, err = s.storageClient.GetRegattasSince(ctx, globalStartTime)
+		if err != nil {
+			err = fmt.Errorf("get regattas since: %w", err)
+			s.LogError(err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		regattas, err = s.storageClient.GetRegattasInTimeInterval(ctx, globalStartTime, *globalEndTime)
+		if err != nil {
+			err = fmt.Errorf("get regattas in time interval: %w", err)
+			s.LogError(err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
 
-	return
+	fmt.Println(regattas)
+
+	// TODO:
+	//  - Load all boats for now because there are only 2 - 3.
+	//  - Drop the rounds and sections for the regattas and boats.
+	//  - Query all positions for affected regattas and boats.
+	//  - Recalculate the rounds and sections via updateRoundsAndSections()
 }
 
 func (s *regattaService) ReceiveDataTicker(boatList []string, done chan struct{}) {
