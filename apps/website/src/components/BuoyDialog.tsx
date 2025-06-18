@@ -4,6 +4,7 @@ import {Map} from "./Map.tsx";
 import {Buoy} from "../services/buoyService.tsx";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from '@mui/icons-material/Remove';
+import {BuoyService} from "../services/buoyService.tsx";
 
 type BuoyDialogProps = {
     open: boolean;
@@ -54,6 +55,7 @@ export const BuoyDialog: React.FC<BuoyDialogProps> = ({open, handleClose, buoys}
     };
 
     const handleConfirm = () => {
+        BuoyService.setBuoys(buoyData).catch(() => console.error('Error setting buoys'))
         handleClose();
     }
 

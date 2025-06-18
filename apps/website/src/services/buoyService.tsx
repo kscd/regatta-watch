@@ -10,6 +10,22 @@ const getBuoys = async (): Promise<FetchedBuoys> => {
   }
   return response.json();
 }
+
+const setBuoys = async (buoys: Buoy[]): Promise<void> => {
+  const response = await fetch('http://localhost:8091/setbuoys',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          buoys: buoys,
+        })
+      }
+  );
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
+  }
+  return response.json();
+}
+
 export type FetchedBuoys = {
   buoys: Buoy[];
 }
@@ -26,4 +42,5 @@ export type Buoy = {
 
 export const BuoyService = {
   getBuoys,
+  setBuoys,
 }

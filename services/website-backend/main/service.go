@@ -39,6 +39,7 @@ type clockInterface interface {
 type storageInterface interface {
 	InsertPositions(ctx context.Context, position []StoragePosition) error
 	GetLastPosition(ctx context.Context, boat string, lowerBound, upperBound time.Time) (*StoragePosition, error)
+	GetAllPositionsInRegattaForBoat(ctx context.Context, regattaID, boatID string) ([]Position, error)
 	GetPositions(ctx context.Context, boat string, startTime, endTime time.Time) ([]Position, error)
 	GetRegattaAtTime(ctx context.Context, time time.Time) (*string, error)
 	GetRegattasInTimeInterval(ctx context.Context, startTime, endTime time.Time) ([]string, error)
@@ -56,6 +57,7 @@ type storageInterface interface {
 	EndSection(ctx context.Context, sectionID, roundID int, regattaID, boatID string, endTime time.Time) error
 	GetRoundsToTime(ctx context.Context, regattaID, boatID string, time time.Time) ([]Round, error)
 	GetSectionsToTime(ctx context.Context, regattaID, boatID string, time time.Time) ([]Section, error)
+	DropRoundsAndSectionsForRegattaAndBoat(ctx context.Context, regattaID, boatID string) error
 }
 
 func newRegattaService(
@@ -543,13 +545,54 @@ func (s *regattaService) SetBuoys(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Println(regattas)
+	// TODO: Get this from the database but don't get all boats, get the right ones.
+	boats := []string{"Bluebird", "Vivace"}
 
-	// TODO:
-	//  - Load all boats for now because there are only 2 - 3.
-	//  - Drop the rounds and sections for the regattas and boats.
-	//  - Query all positions for affected regattas and boats.
-	//  - Recalculate the rounds and sections via updateRoundsAndSections()
+	for _, regatta := range regattas {
+		for _, boat := range boats {
+			err := s.storageClient.DropRoundsAndSectionsForRegattaAndBoat(ctx, regatta, boat)
+			if err != nil {
+				err = fmt.Errorf("drop rounds and sections for regatta %q and boat %q: %w", regatta, boat, err)
+				s.LogError(err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+
+			positions, err := s.storageClient.GetAllPositionsInRegattaForBoat(ctx, regatta, boat)
+			if err != nil {
+				err = fmt.Errorf("get all positions in regatta %q for boat %q: %w", regatta, boat, err)
+				s.LogError(err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+
+			dataServerResponse := DataServerReadMessageResponse{
+				PositionsAtTime: make([]PositionAtTime, 0, len(positions)),
+			}
+			for _, position := range positions {
+				dataServerResponse.PositionsAtTime = append(dataServerResponse.PositionsAtTime, PositionAtTime{
+					Latitude:    position.Latitude,
+					Longitude:   position.Longitude,
+					MeasureTime: position.Time,
+					SendTime:    position.Time,
+				})
+			}
+
+			s.LogDebug(fmt.Sprintf("regatta %q, boat %q, positions %d", regatta, boat, len(dataServerResponse.PositionsAtTime)))
+
+			if len(dataServerResponse.PositionsAtTime) == 0 {
+				continue
+			}
+
+			err = s.updateRoundsAndSections(ctx, nil, boat, &dataServerResponse)
+			if err != nil {
+				err = fmt.Errorf("update rounds and sections for regatta %q and boat %q: %w", regatta, boat, err)
+				s.LogError(err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+		}
+	}
 }
 
 func (s *regattaService) ReceiveDataTicker(boatList []string, done chan struct{}) {
@@ -659,7 +702,6 @@ func (s *regattaService) ReceiveData(boat string) {
 		// We have to recalculate the distances from positions.PositionsAtTime[0] again.
 		// Currently, we assume that the positions are always in ascending order and don't handle this case.
 		s.LogError(errors.New("positions at time is too old"))
-		s.LogDebug(fmt.Sprintf("%s, %s, %s", s.clock.RealNow(), lastPosition.MeasureTime.String(), positions.PositionsAtTime[0].MeasureTime.String()))
 		return
 	}
 
@@ -990,7 +1032,6 @@ func (s *regattaService) updateRoundsAndSections(ctx context.Context, lastPositi
 			if err != nil {
 				err = fmt.Errorf("get current round: %w", err)
 				s.LogError(err)
-				s.LogDebug(fmt.Sprintf("hit! %s, %s", *regattaID, boat))
 				return err
 			}
 

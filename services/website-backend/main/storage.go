@@ -142,6 +142,41 @@ func (c *databaseClient) GetLastPosition(ctx context.Context, boat string, lower
 	return &position, nil
 }
 
+func (c *databaseClient) GetAllPositionsInRegattaForBoat(ctx context.Context, regattaID, boatID string) ([]Position, error) {
+	query := fmt.Sprintf(`
+		SELECT latitude, longitude, measure_time, distance
+		FROM %s
+		WHERE regatta_id = $1
+		AND boat_id = $2
+		ORDER BY measure_time ASC;
+	`, c.gpsTable)
+
+	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
+	defer cancel()
+
+	rows, err := c.database.QueryContext(ctx, query, regattaID, boatID)
+	if err != nil {
+		return nil, fmt.Errorf("query positions: %w", err)
+	}
+
+	var positions []Position
+	for rows.Next() {
+		var position Position
+		err = rows.Scan(
+			&position.Latitude,
+			&position.Longitude,
+			&position.Time,
+			&position.Distance,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("parse row: %w", err)
+		}
+		positions = append(positions, position)
+	}
+
+	return positions, nil
+}
+
 // InsertPositions inserts a list of positions of a boat into the database.
 func (c *databaseClient) InsertPositions(ctx context.Context, positions []StoragePosition) error {
 	if positions == nil {
@@ -372,16 +407,15 @@ func (c *databaseClient) SetBuoys(ctx context.Context, buoys []buoy) error {
 	}
 
 	query := fmt.Sprintf(`
-        UPDATE %s
-        SET 
-            latitude = $1,
-            longitude = $2,
-            pass_angle = $3,
-            is_pass_direction_clockwise = $4,
-        WHERE 
-            id = $4
-            version = $5;
-    `, c.buoyTable)
+       UPDATE %s
+       SET
+           latitude = $1,
+           longitude = $2,
+           pass_angle = $3,
+           is_pass_direction_clockwise = $4
+       WHERE
+           id = $5 AND version = $6;
+   `, c.buoyTable)
 
 	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
 	defer cancel()
@@ -669,4 +703,36 @@ func (c *databaseClient) GetSectionsToTime(ctx context.Context, regattaID, boatI
 	}
 
 	return sections, nil
+}
+
+func (c *databaseClient) DropRoundsAndSectionsForRegattaAndBoat(ctx context.Context, regattaID, boatID string) error {
+	tx, err := c.database.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	deleteSectionsQuery := fmt.Sprintf(`
+        DELETE FROM %s
+        WHERE regatta_id = $1
+        AND boat_id = $2;
+    `, c.sectionTable)
+
+	_, err = tx.Exec(deleteSectionsQuery, regattaID, boatID)
+	if err != nil {
+		return fmt.Errorf("failed to delete from sections: %w", err)
+	}
+
+	deleteRoundsQuery := fmt.Sprintf(`
+        DELETE FROM %s
+        WHERE regatta_id = $1
+        AND boat_id = $2;
+    `, c.roundTable)
+
+	_, err = tx.Exec(deleteRoundsQuery, regattaID, boatID)
+	if err != nil {
+		return fmt.Errorf("failed to delete from rounds: %w", err)
+	}
+
+	return tx.Commit()
 }
