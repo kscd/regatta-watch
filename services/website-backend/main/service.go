@@ -573,21 +573,14 @@ func (s *regattaService) SetBuoys(w http.ResponseWriter, r *http.Request) {
 				})
 			}
 
-			s.LogDebug(fmt.Sprintf("regatta %q, boat %q, positions %d", regatta, boat, len(dataServerResponse.PositionsAtTime)))
-
 			if len(dataServerResponse.PositionsAtTime) == 0 {
 				continue
 			}
 
-			fmt.Println("Start analysis", s.clock.RealNow())
-
-			//err = s.updateRoundsAndSections(ctx, nil, boat, &dataServerResponse)
 			err = s.updateRoundsAndSectionsKnownRegatta(ctx, boat, regatta, &dataServerResponse, m.Buoys)
 			if err != nil {
 				return
 			}
-
-			fmt.Println("End analysis", s.clock.RealNow())
 		}
 	}
 }
@@ -1220,6 +1213,7 @@ func (s *regattaService) updateRoundsAndSectionsKnownRegatta(ctx context.Context
 		s.LogError(err)
 		return err
 	}
+
 	err = s.storageClient.StartSection(
 		ctx,
 		1,
@@ -1241,96 +1235,12 @@ func (s *regattaService) updateRoundsAndSectionsKnownRegatta(ctx context.Context
 
 	round := 1
 	section := 1
-	isRoundOpen := true
-	isSectionOpen := true
 
 	skipEntry := true
 	for _, position := range positions.PositionsAtTime {
 		if skipEntry {
 			skipEntry = false
 			continue
-		}
-
-		// check if we have an open round, start new one if not
-		round, err := s.storageClient.GetCurrentRound(ctx, regattaID, boat)
-		if err != nil {
-			err = fmt.Errorf("get current round: %w", err)
-			s.LogError(err)
-			return err
-		}
-
-		if round == 0 {
-			round, err = s.storageClient.GetLastCompletedRound(ctx, regattaID, boat)
-			if err != nil {
-				err = fmt.Errorf("get last completed round: %w", err)
-				return err
-			}
-
-			round += 1
-
-			err = s.storageClient.StartRound(ctx, round, regattaID, boat, position.MeasureTime)
-			if err != nil {
-				err = fmt.Errorf("start round: %w", err)
-				s.LogError(err)
-				return err
-			}
-
-			err = s.storageClient.StartSection(
-				ctx,
-				1,
-				round,
-				regattaID,
-				boat,
-				position.MeasureTime,
-				buoys[3].ID,
-				buoys[3].Version,
-				buoys[0].ID,
-				buoys[0].Version,
-			)
-			if err != nil {
-				err = fmt.Errorf("start section: %w", err)
-				s.LogError(err)
-				return err
-			}
-		}
-
-		// check if we have an open section, start new one if not
-		section, err := s.storageClient.GetCurrentSection(ctx, round, regattaID, boat)
-		if err != nil {
-			err = fmt.Errorf("get current section: %w", err)
-			s.LogError(err)
-			return err
-		}
-
-		if section == 0 {
-			section, err = s.storageClient.GetLastCompletedSection(ctx, round, regattaID, boat)
-			if err != nil {
-				err = fmt.Errorf("get last completed section: %w", err)
-				return err
-			}
-
-			section %= 4
-			section += 1
-
-			buoyStart := (section + 2) % 4
-			buoyEnd := (section + 3) % 4
-
-			err = s.storageClient.StartSection(
-				ctx,
-				section,
-				round,
-				regattaID,
-				boat,
-				position.MeasureTime,
-				buoys[buoyStart].ID,
-				buoys[buoyStart].Version,
-				buoys[buoyEnd].ID,
-				buoys[buoyEnd].Version)
-			if err != nil {
-				err = fmt.Errorf("start section: %w", err)
-				s.LogError(err)
-				return err
-			}
 		}
 
 		if position.MeasureTime.Sub(oldPosition.MeasureTime).Seconds() == 0 {
@@ -1359,7 +1269,6 @@ func (s *regattaService) updateRoundsAndSectionsKnownRegatta(ctx context.Context
 		}
 
 		if !passed {
-			// skip if relevant buoy was not passed
 			oldPosition = position
 			continue
 		}
@@ -1371,60 +1280,48 @@ func (s *regattaService) updateRoundsAndSectionsKnownRegatta(ctx context.Context
 			return err
 		}
 
-		if section < 4 {
-			nextSection := section + 1
-			buoyStart := (nextSection + 2) % 4
-			buoyEnd := (nextSection + 3) % 4
-
-			err = s.storageClient.StartSection(
-				ctx,
-				nextSection,
-				round,
-				regattaID,
-				boat,
-				position.MeasureTime,
-				buoys[buoyStart].ID,
-				buoys[buoyStart].Version,
-				buoys[buoyEnd].ID,
-				buoys[buoyEnd].Version)
-			if err != nil {
-				err = fmt.Errorf("start section: %w", err)
-				s.LogError(err)
-				return err
-			}
-		} else {
+		if section == 4 {
 			err = s.storageClient.EndRound(ctx, round, regattaID, boat, position.MeasureTime)
 			if err != nil {
 				err = fmt.Errorf("end round: %w", err)
 				s.LogError(err)
 				return err
 			}
+		}
 
-			nextRound := round + 1
-			err = s.storageClient.StartRound(ctx, nextRound, regattaID, boat, position.MeasureTime)
+		section %= 4
+		section += 1
+
+		buoyStart := (section + 2) % 4
+		buoyEnd := (section + 3) % 4
+
+		if section == 1 {
+			round += 1
+			err = s.storageClient.StartRound(ctx, round, regattaID, boat, position.MeasureTime)
 			if err != nil {
 				err = fmt.Errorf("start round: %w", err)
 				s.LogError(err)
 				return err
 			}
-
-			err = s.storageClient.StartSection(
-				ctx,
-				1,
-				nextRound,
-				regattaID,
-				boat,
-				position.MeasureTime,
-				buoys[3].ID,
-				buoys[3].Version,
-				buoys[0].ID,
-				buoys[0].Version)
-			if err != nil {
-				err = fmt.Errorf("start section: %w", err)
-				s.LogError(err)
-				return err
-			}
 		}
+
+		err = s.storageClient.StartSection(
+			ctx,
+			section,
+			round,
+			regattaID,
+			boat,
+			position.MeasureTime,
+			buoys[buoyStart].ID,
+			buoys[buoyStart].Version,
+			buoys[buoyEnd].ID,
+			buoys[buoyEnd].Version)
+		if err != nil {
+			err = fmt.Errorf("start section: %w", err)
+			s.LogError(err)
+			return err
+		}
+
 		oldPosition = position
 	}
 
