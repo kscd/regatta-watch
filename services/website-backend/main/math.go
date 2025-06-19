@@ -183,33 +183,27 @@ func calculateDistanceInNM(oldLatitude, oldLongitude, newLatitude, newLongitude 
 	return math.Sqrt(deltaN*deltaN + deltaW*deltaW) // nautical miles
 }
 
-func calculateIfBuoysPassed(buoys []buoy, oldPosition, newPosition *Position) ([]bool, error) {
-	var isPassed []bool
-	for i := range buoys {
-		lat1, lon1 := calculateNewPosition(buoys[i].Latitude, buoys[i].Longitude, buoys[i].PassAngle+180, buoys[i].ToleranceInMeters)
-		lat2, lon2 := calculateNewPosition(buoys[i].Latitude, buoys[i].Longitude, buoys[i].PassAngle, buoyFarOffPointDistance)
+func calculateIfBuoysPassed(buoy buoy, oldPosition, newPosition *Position) (bool, error) {
+	lat1, lon1 := calculateNewPosition(buoy.Latitude, buoy.Longitude, buoy.PassAngle+180, buoy.ToleranceInMeters)
+	lat2, lon2 := calculateNewPosition(buoy.Latitude, buoy.Longitude, buoy.PassAngle, buoyFarOffPointDistance)
 
-		buoyLS := newLineSegment(lat1, lon1, lat2, lon2)
-		boatLS := newLineSegment(oldPosition.Latitude, oldPosition.Longitude, newPosition.Latitude, newPosition.Longitude)
+	buoyLS := newLineSegment(lat1, lon1, lat2, lon2)
+	boatLS := newLineSegment(oldPosition.Latitude, oldPosition.Longitude, newPosition.Latitude, newPosition.Longitude)
 
-		isBuoyPassed, err := isIntersecting(buoyLS, boatLS)
-		if err != nil {
-			return nil, fmt.Errorf("error checking if buoys passed: %v", err)
-		}
-		if !isBuoyPassed {
-			isPassed = append(isPassed, false)
-			continue
-		}
-		isBuoyPassed = isPassDirectionCorrect(
-			lat1, lon1,
-			lat2, lon2,
-			oldPosition.Latitude, oldPosition.Longitude,
-			newPosition.Latitude, newPosition.Longitude,
-			buoys[i].IsPassDirectionClockwise,
-		)
-		isPassed = append(isPassed, isBuoyPassed)
+	isBuoyPassed, err := isIntersecting(buoyLS, boatLS)
+	if err != nil {
+		return false, fmt.Errorf("error checking if buoys passed: %v", err)
 	}
-	return isPassed, nil
+	if !isBuoyPassed {
+		return false, nil
+	}
+	return isPassDirectionCorrect(
+		lat1, lon1,
+		lat2, lon2,
+		oldPosition.Latitude, oldPosition.Longitude,
+		newPosition.Latitude, newPosition.Longitude,
+		buoy.IsPassDirectionClockwise,
+	), nil
 }
 
 func isPassDirectionCorrect(buoyLat1, buoyLon1, buoyLat2, buoyLon2, boatLat1, boatLon1, boatLat2, boatLon2 float64, isPassDirectionClockwise bool) bool {
