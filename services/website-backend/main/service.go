@@ -20,12 +20,13 @@ const (
 )
 
 type regattaService struct {
-	storageClient    storageInterface
-	httpClient       *http.Client
-	dataServerURL    string
-	regattaStartTime time.Time
-	regattaEndTime   time.Time
-	clock            clockInterface
+	storageClient         storageInterface
+	httpClient            *http.Client
+	dataServerURL         string
+	regattaStartTime      time.Time
+	regattaEndTime        time.Time
+	clock                 clockInterface
+	isDataReceiverRunning bool
 }
 
 type clockInterface interface {
@@ -65,14 +66,16 @@ func newRegattaService(
 	dataServerURL string,
 	regattaStartTime time.Time,
 	regattaEndTime time.Time,
-	httpClient *http.Client) *regattaService {
+	httpClient *http.Client,
+	isDataReceiverRunning bool) *regattaService {
 	return &regattaService{
-		storageClient:    storageClient,
-		dataServerURL:    dataServerURL,
-		httpClient:       httpClient,
-		regattaStartTime: regattaStartTime,
-		regattaEndTime:   regattaEndTime,
-		clock:            newClock(),
+		storageClient:         storageClient,
+		dataServerURL:         dataServerURL,
+		httpClient:            httpClient,
+		regattaStartTime:      regattaStartTime,
+		regattaEndTime:        regattaEndTime,
+		clock:                 newClock(),
+		isDataReceiverRunning: isDataReceiverRunning,
 	}
 }
 
@@ -493,6 +496,9 @@ func (s *regattaService) SetBuoys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	oldDataReceiverState := s.isDataReceiverRunning
+	s.isDataReceiverRunning = false
+
 	err = s.storageClient.SetBuoys(ctx, m.Buoys)
 	if err != nil {
 		err = fmt.Errorf("set buoys: set buoys: %w", err)
@@ -583,6 +589,8 @@ func (s *regattaService) SetBuoys(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
+	s.isDataReceiverRunning = oldDataReceiverState
 }
 
 func (s *regattaService) ReceiveDataTicker(boatList []string, done chan struct{}) {
@@ -603,8 +611,10 @@ func (s *regattaService) ReceiveDataTicker(boatList []string, done chan struct{}
 				close(done)
 				return
 			case <-ticker.C:
-				for _, boat := range boatList {
-					s.ReceiveData(boat)
+				if s.isDataReceiverRunning {
+					for _, boat := range boatList {
+						s.ReceiveData(boat)
+					}
 				}
 			}
 		}

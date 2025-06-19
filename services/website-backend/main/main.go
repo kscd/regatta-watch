@@ -56,7 +56,8 @@ func main() {
 		c.DataServerURL,
 		c.RegattaStartTime,
 		c.RegattaEndTime,
-		client)
+		client,
+		c.GetDataFromServer)
 
 	http.HandleFunc("/ping", regattaService.Ping)
 	http.HandleFunc("/fetchposition", regattaService.FetchPosition)
