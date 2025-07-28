@@ -7,6 +7,7 @@ type OwnTracksMessage struct {
 	Latitude  float64 `json:"lat"`
 	Longitude float64 `json:"lon"`
 	CreatedAt int     `json:"created_at"`
+	Topic     string  `json:"topic"`
 }
 
 type PushMessageRequest struct {

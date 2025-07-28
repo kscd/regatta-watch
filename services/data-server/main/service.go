@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -58,7 +59,7 @@ func (s *regattaService) PushPositions(w http.ResponseWriter, r *http.Request) {
 	pmr := PushMessageRequest{
 		Positions: []Position{
 			{
-				Boat:        "Bluebird",
+				Boat:        strings.Split(m.Topic, "/")[2],
 				Longitude:   m.Longitude,
 				Latitude:    m.Latitude,
 				MeasureTime: time.Unix(int64(m.CreatedAt), 0),
