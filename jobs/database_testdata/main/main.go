@@ -34,6 +34,7 @@ func main() {
 				Longitude:   cornerPositionsBluebird[i].Longitude + float64(j)*deltaLon,
 				Latitude:    cornerPositionsBluebird[i].Latitude + float64(j)*deltaLat,
 				MeasureTime: cornerPositionsBluebird[i].MeasureTime.Add(time.Duration(j) * time.Second),
+				Battery:     100 - timeDiff*i - j,
 			}
 			positions = append(positions, position)
 		}
@@ -50,6 +51,7 @@ func main() {
 				Longitude:   cornerPositionsVivace[i].Longitude + float64(j)*deltaLon,
 				Latitude:    cornerPositionsVivace[i].Latitude + float64(j)*deltaLat,
 				MeasureTime: cornerPositionsVivace[i].MeasureTime.Add(time.Duration(j) * time.Second),
+				Battery:     80 - timeDiff*i - j,
 			}
 			positions = append(positions, position)
 		}

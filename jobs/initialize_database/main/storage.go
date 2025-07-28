@@ -200,6 +200,7 @@ func (c *DatabaseClient) CreateGPSDataTable(ctx context.Context) error {
             distance pg_catalog.float8 NOT NULL DEFAULT 0,
             heading pg_catalog.float8 NOT NULL DEFAULT 0,
             velocity pg_catalog.float8 NOT NULL DEFAULT 0,
+            battery int NOT NULL DEFAULT 0;
 
             CONSTRAINT fk_gps_data_regatta
                 FOREIGN KEY (regatta_id)

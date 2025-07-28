@@ -63,6 +63,7 @@ func (s *regattaService) PushPositions(w http.ResponseWriter, r *http.Request) {
 				Longitude:   m.Longitude,
 				Latitude:    m.Latitude,
 				MeasureTime: time.Unix(int64(m.CreatedAt), 0),
+				Battery:     m.Battery,
 			},
 		},
 		SendTime: time.Unix(int64(m.CreatedAt), 0),
@@ -122,79 +123,6 @@ func (s *regattaService) ReadPositions(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(responseBytes)
 	if err != nil {
 		err = fmt.Errorf("read position: write to http writer: %w", err)
-		s.LogError(err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
-}
-
-func (s *regattaService) PushBattery(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	// parse data from request
-	var m BatteryMessage
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		err = fmt.Errorf("push battery: read http body: %w", err)
-		s.LogError(err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
-	if err = json.Unmarshal(body, &m); err != nil {
-		err = fmt.Errorf("push battery: unmarshal http body: %w", err)
-		s.LogError(err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
-
-	// store new data in DB
-	err = s.dbClient.InsertBatteryLevels(ctx, &m)
-	if err != nil {
-		err = fmt.Errorf("push battery: insert into database: %w", err)
-		s.LogError(err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
-}
-
-func (s *regattaService) ReadBattery(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	// parse data from request
-	var b ReadMessageRequest
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		err = fmt.Errorf("read battery: read http body: %w", err)
-		s.LogError(err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
-	if err = json.Unmarshal(body, &b); err != nil {
-		err = fmt.Errorf("read battery: unmarshal http body: %w", err)
-		s.LogError(err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
-
-	batteryMessage, err := s.dbClient.ExtractBatteryLevel(ctx, b.StartTime, b.EndTime)
-	if err != nil {
-		err = fmt.Errorf("read battery: extract from database: %w", err)
-		s.LogError(err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
-
-	responseBytes, err := json.Marshal(batteryMessage)
-	if err != nil {
-		err = fmt.Errorf("read battery: marshal response: %w", err)
-		s.LogError(err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
-
-	_, err = w.Write(responseBytes)
-	if err != nil {
-		err = fmt.Errorf("read battery: write to http writer: %w", err)
 		s.LogError(err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return

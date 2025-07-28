@@ -35,8 +35,6 @@ func main() {
 	http.HandleFunc("/ping", regattaService.Ping)
 	http.HandleFunc("/pushposition", regattaService.PushPositions)
 	http.HandleFunc("/readposition", regattaService.ReadPositions)
-	http.HandleFunc("/pushbattery", regattaService.PushBattery)
-	http.HandleFunc("/readbattery", regattaService.ReadBattery)
 
 	fmt.Println("Service started and listening")
 	//err = http.ListenAndServeTLS(":8090", certFile, keyFile, nil)

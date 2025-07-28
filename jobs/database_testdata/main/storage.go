@@ -55,7 +55,7 @@ func (c *DatabaseClient) InsertPositions(ctx context.Context, position *PushMess
 		return errors.New("position is set to nil")
 	}
 
-	query := fmt.Sprintf(`INSERT INTO "%s"(boat, longitude, latitude, measure_time, send_time) VALUES ($1, $2, $3, $4, $5);`, c.Table)
+	query := fmt.Sprintf(`INSERT INTO "%s"(boat, longitude, latitude, measure_time, send_time, battery) VALUES ($1, $2, $3, $4, $5, $6);`, c.Table)
 
 	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
 	defer cancel()
@@ -69,6 +69,7 @@ func (c *DatabaseClient) InsertPositions(ctx context.Context, position *PushMess
 			position.Positions[i].Latitude,
 			position.Positions[i].MeasureTime,
 			position.SendTime,
+			position.Positions[i].Battery,
 		)
 
 		if err != nil {

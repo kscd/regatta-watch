@@ -12,4 +12,5 @@ type Position struct {
 	Longitude   float64   `json:"longitude"`
 	Latitude    float64   `json:"latitude"`
 	MeasureTime time.Time `json:"measure_time"`
+	Battery     int       `json:"battery"`
 }

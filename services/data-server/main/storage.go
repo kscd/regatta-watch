@@ -46,7 +46,7 @@ func (c *databaseClient) InsertPositions(ctx context.Context, position *PushMess
 		return errors.New("position is set to nil")
 	}
 
-	query := `INSERT INTO "positions_data_server"(boat, longitude, latitude, measure_time, send_time) VALUES ($1, $2, $3, $4, $5);`
+	query := `INSERT INTO "positions_data_server"(boat, longitude, latitude, measure_time, send_time, battery) VALUES ($1, $2, $3, $4, $5, $6);`
 
 	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
 	defer cancel()
@@ -60,6 +60,7 @@ func (c *databaseClient) InsertPositions(ctx context.Context, position *PushMess
 			position.Positions[i].Latitude,
 			position.Positions[i].MeasureTime,
 			position.SendTime,
+			position.Positions[i].Battery,
 		)
 
 		if err != nil {
@@ -86,7 +87,7 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, start ti
 	}
 
 	query := fmt.Sprintf(`
-       SELECT longitude, latitude, measure_time, send_time, receive_time
+       SELECT longitude, latitude, measure_time, send_time, receive_time, battery
        FROM %s
        WHERE boat = $1
        AND measure_time > $2
@@ -117,6 +118,7 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, start ti
 			&position.MeasureTime,
 			&position.SendTime,
 			&position.ReceiveTime,
+			&position.Battery,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("parse row: %w", err)
@@ -139,65 +141,4 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, start ti
 	}
 
 	return positions, nil
-}
-
-func (c *databaseClient) InsertBatteryLevels(ctx context.Context, batteryMessage *BatteryMessage) error {
-	if batteryMessage == nil {
-		return errors.New("position is set to nil")
-	}
-
-	query := `INSERT INTO "battery"(batteryLevel, measure_time) VALUES ($1, $2);`
-
-	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
-	defer cancel()
-
-	for i := range batteryMessage.BatteryLevel {
-		_, err := c.Database.ExecContext(
-			ctx,
-			query,
-			batteryMessage.BatteryLevel[i].BatteryLevel,
-			batteryMessage.BatteryLevel[i].MeasureTime,
-		)
-
-		if err != nil {
-			return fmt.Errorf("insert battery level: %w", err)
-		}
-	}
-
-	return nil
-}
-
-func (c *databaseClient) ExtractBatteryLevel(ctx context.Context, start time.Time, end time.Time) (*BatteryMessage, error) {
-	query := `SELECT batteryLevel, measure_time FROM battery WHERE measure_time >= $1 AND measure_time < $2;`
-
-	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
-	defer cancel()
-
-	rows, err := c.Database.QueryContext(
-		ctx,
-		query,
-		start,
-		end)
-
-	if err != nil {
-		return nil, fmt.Errorf("query battery level: %w", err)
-	}
-
-	var batteryLevelSlice []BatteryLevel
-	for rows.Next() {
-		var batteryLevel BatteryLevel
-		err = rows.Scan(
-			&batteryLevel.BatteryLevel,
-			&batteryLevel.MeasureTime,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("parse row: %w", err)
-		}
-		batteryLevelSlice = append(batteryLevelSlice, batteryLevel)
-	}
-
-	batteryMessage := BatteryMessage{
-		BatteryLevel: batteryLevelSlice}
-
-	return &batteryMessage, nil
 }
