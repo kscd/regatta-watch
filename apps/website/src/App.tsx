@@ -17,6 +17,7 @@ import {MenuDrawer} from "./components/MenuDrawer.tsx";
 import {PearlChainDialog} from "./components/PearlChainDialog.tsx";
 import {Buoy, BuoyService, FetchedBuoys} from "./services/buoyService.tsx";
 import {BuoyDialog} from "./components/BuoyDialog.tsx";
+import SailingIcon from '@mui/icons-material/Sailing';
 
 function App() {
     const [isMenuDrawerOpen, setIsMenuDrawerOpen] = React.useState(false);
@@ -105,7 +106,10 @@ function App() {
                 </div>
                 <div className={"regatta-container"}>
                     <div className={"boat-container"}>
-                        <h2 className="boat-name">PSC Vivace (Kielzugvogel)</h2>
+                        <div className="boat-name">
+                            <SailingIcon style={{ color: 'grey' }} />
+                            <h2 >PSC Vivace (Kielzugvogel)</h2>
+                        </div>
                         <InfoBoard boatState={position2.BoatInfo}/>
                         <RoundTimeBoard roundTimes={roundTime2.round_times} sectionTimes={roundTime2.section_times}></RoundTimeBoard>
                     </div>
@@ -113,7 +117,10 @@ function App() {
                         <Map buoys={buoys} boatPositions={[boatPosition1, boatPosition2]} pearlChains={[pearlChain1, pearlChain2]} buoysOld={[]} />
                     </div>
                     <div className={"boat-container"}>
-                        <h2 className="boat-name">PSC Bluebird (Conger)</h2>
+                        <div className="boat-name">
+                            <SailingIcon style={{ color: 'blue' }} />
+                            <h2 >PSC Bluebird (Conger)</h2>
+                        </div>
                         <InfoBoard boatState={position1.BoatInfo}/>
                         <RoundTimeBoard roundTimes={roundTime1.round_times} sectionTimes={roundTime1.section_times}></RoundTimeBoard>
                     </div>

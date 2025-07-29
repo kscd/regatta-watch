@@ -47,6 +47,13 @@
   justify-content: space-between;
 }
 
+.boat-name{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .map-container {
   width: 30vw;
   height: 100%;
