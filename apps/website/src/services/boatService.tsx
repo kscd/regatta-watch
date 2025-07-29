@@ -76,6 +76,7 @@ export type BoatInfo = {
     crew1: string;
     next_crew0: string;
     next_crew1: string;
+    battery: number;
 };
 
 export type PearlChain = {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {BoatService, BoatInfo, PearlChain} from '../services/boatService';
 
 export const useDataBase = (boat1: string, boat2: string) => {
-  const startPosition = {BoatInfo: {latitude: 53.5675975, longitude: 10.004, heading: 0, velocity: 0, distance: 0, round:1, section:1, crew0:"?", crew1:"?", next_crew0:"?", next_crew1:"?"}}
+  const startPosition = {BoatInfo: {latitude: 53.5675975, longitude: 10.004, heading: 0, velocity: 0, distance: 0, round:1, section:1, crew0:"?", crew1:"?", next_crew0:"?", next_crew1:"?", battery: 0}}
   const startPearlChain = {positions: [{latitude: 53.5675975, longitude: 10.004, heading: 0}]}
   const startRoundTimes = {round_times: [] as number[], section_times: [] as number[]};
 

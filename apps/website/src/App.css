@@ -53,6 +53,13 @@
   gap: 0.5rem;
 }
 
+.battery{
+  margin-left: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .map-container {
   width: 30vw;
   height: 100%;

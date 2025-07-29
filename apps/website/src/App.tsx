@@ -18,6 +18,18 @@ import {PearlChainDialog} from "./components/PearlChainDialog.tsx";
 import {Buoy, BuoyService, FetchedBuoys} from "./services/buoyService.tsx";
 import {BuoyDialog} from "./components/BuoyDialog.tsx";
 import SailingIcon from '@mui/icons-material/Sailing';
+import {
+  Battery0Bar,
+  Battery1Bar,
+  Battery2Bar,
+  Battery3Bar,
+  Battery4Bar,
+  Battery5Bar,
+  Battery6Bar,
+  BatteryFull,
+  BatteryAlert,
+} from "@mui/icons-material";
+import type { SvgIconProps } from "@mui/material";
 
 function App() {
     const [isMenuDrawerOpen, setIsMenuDrawerOpen] = React.useState(false);
@@ -107,8 +119,12 @@ function App() {
                 <div className={"regatta-container"}>
                     <div className={"boat-container"}>
                         <div className="boat-name">
-                             <SailingIcon style={{ color: 'grey' }} />
-                             <h2 >PSC Vivace (Kielzugvogel)</h2>
+                            <SailingIcon style={{ color: 'grey' }} />
+                            <h2 >PSC Vivace (Kielzugvogel)</h2>
+                            <div className='battery'>
+                                {getBatteryIcon(position2.BoatInfo.battery)}
+                                {position2.BoatInfo.battery}%
+                            </div>
                         </div>
                         <InfoBoard boatState={position2.BoatInfo}/>
                         <RoundTimeBoard roundTimes={roundTime2.round_times} sectionTimes={roundTime2.section_times}></RoundTimeBoard>
@@ -120,6 +136,10 @@ function App() {
                         <div className="boat-name">
                             <SailingIcon style={{ color: 'blue' }} />
                             <h2 >PSC Bluebird (Conger)</h2>
+                            <div className='battery'>
+                                {getBatteryIcon(position1.BoatInfo.battery)}
+                                {position1.BoatInfo.battery}%
+                            </div>
                         </div>
                         <InfoBoard boatState={position1.BoatInfo}/>
                         <RoundTimeBoard roundTimes={roundTime1.round_times} sectionTimes={roundTime1.section_times}></RoundTimeBoard>
@@ -138,6 +158,19 @@ function App() {
             <BuoyDialog open={isBuoyDialogOpen} handleClose={handleCloseBuoyDialog} buoys={buoys}></BuoyDialog>
         </>
     )
+}
+
+export function getBatteryIcon(level: number): React.ReactElement<SvgIconProps> {
+  if (level < 0) return <BatteryAlert color="error" />;
+  if (level >= 87.5) return <BatteryFull color="success" />;
+  if (level >= 75) return <Battery6Bar color="success" />;
+  if (level >= 62.5) return <Battery5Bar color="success" />;
+  if (level >= 50) return <Battery4Bar color="success" />;
+  if (level >= 37.5) return <Battery3Bar color="warning" />;
+  if (level >= 25) return <Battery2Bar color="warning" />;
+  if (level >= 12.5) return <Battery1Bar color="warning" />;
+  if (level >= 0) return <Battery0Bar color="error" />;
+  return <BatteryAlert color="error" />;
 }
 
 export default App
