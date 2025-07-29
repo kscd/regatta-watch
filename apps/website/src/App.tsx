@@ -107,8 +107,8 @@ function App() {
                 <div className={"regatta-container"}>
                     <div className={"boat-container"}>
                         <div className="boat-name">
-                            <SailingIcon style={{ color: 'grey' }} />
-                            <h2 >PSC Vivace (Kielzugvogel)</h2>
+                             <SailingIcon style={{ color: 'grey' }} />
+                             <h2 >PSC Vivace (Kielzugvogel)</h2>
                         </div>
                         <InfoBoard boatState={position2.BoatInfo}/>
                         <RoundTimeBoard roundTimes={roundTime2.round_times} sectionTimes={roundTime2.section_times}></RoundTimeBoard>
