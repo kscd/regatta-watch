@@ -20,6 +20,7 @@ type FetchPositionResponse struct {
 	Crew1       string    `json:"crew1"`
 	NextCrew0   string    `json:"next_crew0"`
 	NextCrew1   string    `json:"next_crew1"`
+	Battery     int       `json:"battery"`
 }
 
 type FetchPearlChainRequest struct {
@@ -56,6 +57,7 @@ type PositionAtTime struct {
 	MeasureTime time.Time `json:"measure_time"`
 	SendTime    time.Time `json:"send_time"`
 	ReceiveTime time.Time `json:"receive_time"`
+	Battery     int       `json:"battery"`
 }
 
 type FetchRoundTimeRequest struct {

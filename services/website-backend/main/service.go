@@ -184,6 +184,7 @@ func (s *regattaService) FetchPosition(w http.ResponseWriter, r *http.Request) {
 		Crew1:       crew[1],
 		NextCrew0:   nextCrew[0],
 		NextCrew1:   nextCrew[1],
+		Battery:     position.Battery,
 	}
 
 	responseBytes, err := json.Marshal(response)
@@ -741,6 +742,7 @@ func (s *regattaService) insertPositions(ctx context.Context, lastPosition *Stor
 		Velocity:    0,
 		MeasureTime: positions.PositionsAtTime[0].MeasureTime,
 		SendTime:    positions.PositionsAtTime[0].SendTime,
+		Battery:     positions.PositionsAtTime[0].Battery,
 	}
 
 	if lastPosition != nil {
@@ -804,6 +806,7 @@ func (s *regattaService) insertPositions(ctx context.Context, lastPosition *Stor
 			Velocity:    velocity,
 			MeasureTime: position.MeasureTime,
 			SendTime:    position.SendTime,
+			Battery:     position.Battery,
 		}
 		storagePositions = append(storagePositions, storagePosition)
 	}

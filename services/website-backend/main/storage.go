@@ -44,6 +44,7 @@ type StoragePosition struct {
 	Velocity    float64   `json:"velocity"`
 	MeasureTime time.Time `json:"measure_time"`
 	SendTime    time.Time `json:"send_time"`
+	Battery     int       `json:"battery"`
 }
 
 func newDatabaseClient(config databaseConfig) (*databaseClient, error) {
@@ -107,7 +108,7 @@ func (c *databaseClient) GetPositions(ctx context.Context, boat string, startTim
 // to the upper bound time and after or equal to the lower bound time.
 func (c *databaseClient) GetLastPosition(ctx context.Context, boat string, lowerBound, upperBound time.Time) (*StoragePosition, error) {
 	query := fmt.Sprintf(`
-		       SELECT regatta_id, latitude, longitude, measure_time, send_time, distance, heading, velocity
+		       SELECT regatta_id, latitude, longitude, measure_time, send_time, distance, heading, velocity, battery
 			   FROM %s
 			   WHERE boat_id = $1
 			   AND measure_time >= $2
@@ -131,6 +132,7 @@ func (c *databaseClient) GetLastPosition(ctx context.Context, boat string, lower
 		&position.Distance,
 		&position.Heading,
 		&position.Velocity,
+		&position.Battery,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -184,13 +186,13 @@ func (c *databaseClient) InsertPositions(ctx context.Context, positions []Storag
 	}
 
 	queryWithRegatta := fmt.Sprintf(`
-       INSERT INTO %s(regatta_id, boat_id, latitude, longitude, measure_time, send_time, distance, heading, velocity)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+       INSERT INTO %s(regatta_id, boat_id, latitude, longitude, measure_time, send_time, distance, heading, velocity, battery)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
        `, c.gpsTable)
 
 	queryWithoutRegatta := fmt.Sprintf(`
-       INSERT INTO %s(boat_id, latitude, longitude, measure_time, send_time, distance, heading, velocity)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+       INSERT INTO %s(boat_id, latitude, longitude, measure_time, send_time, distance, heading, velocity, battery)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
        `, c.gpsTable)
 
 	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
@@ -211,6 +213,7 @@ func (c *databaseClient) InsertPositions(ctx context.Context, positions []Storag
 				position.Distance,
 				position.Heading,
 				position.Velocity,
+				position.Battery,
 			)
 		} else {
 			_, err = c.database.ExecContext(
@@ -225,6 +228,7 @@ func (c *databaseClient) InsertPositions(ctx context.Context, positions []Storag
 				position.Distance,
 				position.Heading,
 				position.Velocity,
+				position.Battery,
 			)
 		}
 
