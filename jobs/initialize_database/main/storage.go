@@ -88,8 +88,8 @@ func (c *DatabaseClient) CreateBuoyTable(ctx context.Context) error {
         );
         INSERT INTO buoys (id, version, latitude, longitude, pass_angle, is_pass_direction_clockwise, start_time) VALUES ('Schwanenwik bridge', 1, 53.565538, 10.009123,  90, true, '2024-01-01 00:00:00+02') ON CONFLICT DO NOTHING;
         INSERT INTO buoys (id, version, latitude, longitude, pass_angle, is_pass_direction_clockwise, start_time) VALUES ('Kennedy bridge',     1, 53.562266, 10.00422,  225, true, '2024-01-01 00:00:00+02') ON CONFLICT DO NOTHING;
-        INSERT INTO buoys (id, version, latitude, longitude, pass_angle, is_pass_direction_clockwise, start_time) VALUES ('Langer Zug',         1, 53.575497, 10.005418,  45, true, '2024-01-01 00:00:00+02') ON CONFLICT DO NOTHING;
-        INSERT INTO buoys (id, version, latitude, longitude, pass_angle, is_pass_direction_clockwise, start_time) VALUES ('Pier',               1, 53.577880, 10.008151, 180, true, '2024-01-01 00:00:00+02') ON CONFLICT DO NOTHING;
+        INSERT INTO buoys (id, version, latitude, longitude, pass_angle, is_pass_direction_clockwise, start_time) VALUES ('Langer Zug',         1, 53.575497, 10.005418,   0, true, '2024-01-01 00:00:00+02') ON CONFLICT DO NOTHING;
+        INSERT INTO buoys (id, version, latitude, longitude, pass_angle, is_pass_direction_clockwise, start_time) VALUES ('Pier',               1, 53.577880, 10.008151, 160, true, '2024-01-01 00:00:00+02') ON CONFLICT DO NOTHING;
         `)
 
 	ctx, cancel := context.WithTimeout(ctx, c.defaultTimeout)
@@ -200,7 +200,7 @@ func (c *DatabaseClient) CreateGPSDataTable(ctx context.Context) error {
             distance pg_catalog.float8 NOT NULL DEFAULT 0,
             heading pg_catalog.float8 NOT NULL DEFAULT 0,
             velocity pg_catalog.float8 NOT NULL DEFAULT 0,
-            battery int NOT NULL DEFAULT 0;
+            battery int NOT NULL DEFAULT 0,
 
             CONSTRAINT fk_gps_data_regatta
                 FOREIGN KEY (regatta_id)
