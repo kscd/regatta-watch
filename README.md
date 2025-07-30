@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS positions_data_server (
     latitude pg_catalog.float8 NOT NULL DEFAULT 0.0,
     measure_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
     send_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
-    receive_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+    receive_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    battery NOT NULL DEFAULT 0
 );
 ```
 
@@ -63,6 +64,7 @@ CREATE TABLE IF NOT EXISTS positions_data_server_test (
     measure_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
     send_time timestamptz NOT NULL DEFAULT '1970-01-01 00:00:00+00',
     receive_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+    battery NOT NULL DEFAULT 0
 );
 ```
 
