@@ -119,21 +119,6 @@ function App() {
                 <div className={"regatta-container"}>
                     <div className={"boat-container"}>
                         <div className="boat-name">
-                            <SailingIcon style={{ color: 'grey' }} />
-                            <h2 >PSC Vivace (Kielzugvogel)</h2>
-                            <div className='battery'>
-                                {getBatteryIcon(position2.BoatInfo.battery)}
-                                {position2.BoatInfo.battery}%
-                            </div>
-                        </div>
-                        <InfoBoard boatState={position2.BoatInfo}/>
-                        <RoundTimeBoard roundTimes={roundTime2.round_times} sectionTimes={roundTime2.section_times}></RoundTimeBoard>
-                    </div>
-                    <div className="map-container">
-                        <Map buoys={buoys} boatPositions={[boatPosition1, boatPosition2]} pearlChains={[pearlChain1, pearlChain2]} buoysOld={[]} />
-                    </div>
-                    <div className={"boat-container"}>
-                        <div className="boat-name">
                             <SailingIcon style={{ color: 'blue' }} />
                             <h2 >PSC Bluebird (Conger)</h2>
                             <div className='battery'>
@@ -143,6 +128,21 @@ function App() {
                         </div>
                         <InfoBoard boatState={position1.BoatInfo}/>
                         <RoundTimeBoard roundTimes={roundTime1.round_times} sectionTimes={roundTime1.section_times}></RoundTimeBoard>
+                    </div>
+                    <div className="map-container">
+                        <Map buoys={buoys} boatPositions={[boatPosition1, boatPosition2]} pearlChains={[pearlChain1, pearlChain2]} buoysOld={[]} />
+                    </div>
+                    <div className={"boat-container"}>
+                        <div className="boat-name">
+                            <SailingIcon style={{ color: '#ec7c25' }} />
+                            <h2 >PSC Vivace (Kielzugvogel)</h2>
+                            <div className='battery'>
+                                {getBatteryIcon(position2.BoatInfo.battery)}
+                                {position2.BoatInfo.battery}%
+                            </div>
+                        </div>
+                        <InfoBoard boatState={position2.BoatInfo}/>
+                        <RoundTimeBoard roundTimes={roundTime2.round_times} sectionTimes={roundTime2.section_times}></RoundTimeBoard>
                     </div>
                 </div>
             </div>

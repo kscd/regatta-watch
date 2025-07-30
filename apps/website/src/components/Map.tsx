@@ -43,19 +43,19 @@ export const Map: React.FC<MapProps> = ({buoys, boatPositions, pearlChains, buoy
     const pathOptionsBoatList = [{
         color: 'blue', fillColor: 'blue', fillOpacity: 1,
     },{
-        color: 'grey', fillColor: 'grey', fillOpacity: 1,
+        color: '#ec7c25', fillColor: '#ec7c25', fillOpacity: 1,
     }];
 
     const pathOptionsPearlChainPolylineList = [{
         color: 'blue', opacity: 0.25
     },{
-        color: 'grey', opacity: 0.25
+        color: '#ec7c25', opacity: 0.25
     }];
 
     const pathOptionsPearlChainList = [{
         color: 'blue', fillColor: 'blue', fillOpacity: 1
     },{
-        color: 'grey', fillColor: 'grey', fillOpacity: 1
+        color: '#ec7c25', fillColor: '#ec7c25', fillOpacity: 1
     }];
 
     return (
